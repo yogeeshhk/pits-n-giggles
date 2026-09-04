@@ -163,6 +163,7 @@ datas += copy_metadata("fastmcp")
 
 # Frontend assets (CSS, HTML, JS)
 datas.extend(collect_directory("apps/frontend/css", "apps/frontend/css"))
+datas.extend(collect_directory("apps/frontend/data", "apps/frontend/data"))
 datas.extend(collect_directory("apps/frontend/html", "apps/frontend/html"))
 datas.extend(collect_directory("apps/frontend/js", "apps/frontend/js"))
 
@@ -193,6 +194,7 @@ datas.extend([
     qml_file("apps/hud/ui/overlays/circuit_info", "circuit_info.qml"),
     qml_file("apps/hud/ui/overlays/pu", "pu.qml"),
     qml_file("apps/hud/ui/overlays/hud_overlay", "hud_overlay.qml"),
+    qml_file("apps/hud/ui/overlays/warnings_telemetry", "warnings_telemetry.qml"),
     qml_file("apps/hud/ui/overlays/mfd", "mfd.qml"),
     qml_file("apps/hud/ui/overlays/mfd/pages/collapsed", "collapsed_page.qml"),
     qml_file("apps/hud/ui/overlays/mfd/pages/fuel", "fuel_page.qml"),

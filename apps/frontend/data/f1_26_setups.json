@@ -1,0 +1,46 @@
+{
+  "game": "F1 26",
+  "source": "f1_26_setups.xlsx",
+  "setups": [
+    {"circuit":"Australia","aero":"30-0q / 42-15r","differential":"100-45q 60r","suspension-geometry":"LLLL","suspension":"41-38-1-5-21-47","brakes":"98/56","tyres-q":"29.5 20.5","tyres-r":"29.5 20.5","compounds":"C3-C5","strategy-50":"MH 11-13/HM 16-18/MHH 8,19","laps-50":29,"creation-date":"46197","notes":"lico hell"},
+    {"circuit":"China","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C2-C4","strategy-50":"MH 10-12/HM 16-17","laps-50":28,"creation-date":null,"notes":null},
+    {"circuit":"Japan","aero":"45-16","differential":"100-45q 50r","suspension-geometry":"LLLL","suspension":"41-41-1-1-23-48","brakes":"96/56","tyres-q":"25.5 20.5","tyres-r":"25.0 20.5","compounds":"C1-C3","strategy-50":"MH 10-12/HM 15-17/SMM 7,17","laps-50":27,"creation-date":"46199","notes":"SM is not worth in leagues. Lico hell"},
+    {"circuit":"Bahrain","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C1-C3","strategy-50":"HM 17-18/MH 11-12/SMM 7,18","laps-50":29,"creation-date":null,"notes":null},
+    {"circuit":"Saudi Arabia","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":"MH 11-12/HM 13-14/MHH 6,16","laps-50":25,"creation-date":null,"notes":null},
+    {"circuit":"Miami","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":"MH 12-13/HM 16-17/MHH 7,18","laps-50":29,"creation-date":null,"notes":null},
+    {"circuit":"Canada","aero":"50-24","differential":"100-55","suspension-geometry":"LLLL","suspension":"41-41-1-4-21-44","brakes":"98/57","tyres-q":"26.0 20.5","tyres-r":"29.5 20.5","compounds":"C3-C5","strategy-50":"MH 13-15/HM 20-22/MHH 9, 23","laps-50":35,"creation-date":"46208","notes":"C4-C6 in career. Do MHH in that case. Use a medium for the sprint to back up both hards"},
+    {"circuit":"Monaco","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":"MH 11-13","laps-50":39,"creation-date":null,"notes":"Pit as early as possible"},
+    {"circuit":"Catalunya","aero":"50-23","differential":"100-45","suspension-geometry":"LLLL","suspension":"41-38-1-5-21-43","brakes":"98/56","tyres-q":"29.5-20.5","tyres-r":"29.5-20.5","compounds":"C1-C3","strategy-50":"MH 12-14, HM 20-22, SH 11-13?","laps-50":33,"creation-date":"46200","notes":"Soft = crap"},
+    {"circuit":"Austria","aero":"50-12q 50-24r","differential":"100-60","suspension-geometry":"LLLL","suspension":"41-41-1-6-20-47","brakes":"98q 97r/56-57","tyres-q":"29.5-20.5","tyres-r":"29.5-20.5","compounds":"C3-C5","strategy-50":"MH 14-16, HM 20-23, MHH 8,22","laps-50":36,"creation-date":"46198","notes":"moderately easy onestop"},
+    {"circuit":"Britain","aero":"36-5","differential":"100-55","suspension-geometry":"LLLL","suspension":"41-41-1-1-21-42","brakes":"97/59","tyres-q":"29.5-20.5","tyres-r":"29.5-20.5","compounds":"C2-C4","strategy-50":"MH 9-11, HM 15-17","laps-50":26,"creation-date":"46202","notes":"lico hell. 50% throttle second half of any straight"},
+    {"circuit":"Belgium","aero":"20-0","differential":"100-45","suspension-geometry":"LLLL","suspension":"41-41-1-5-20-46","brakes":"100/57","tyres-q":"29.5-26.5","tyres-r":"29.5-26.5","compounds":"C1, C3, C4","strategy-50":"HM 13-15, MH 7-9","laps-50":22,"creation-date":"46196","notes":"lico disaster. See Silverstone"},
+    {"circuit":"Hungary","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":35,"creation-date":null,"notes":null},
+    {"circuit":"Netherlands","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C2-C4","strategy-50":null,"laps-50":36,"creation-date":null,"notes":null},
+    {"circuit":"Italy","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":27,"creation-date":null,"notes":null},
+    {"circuit":"Madrid","aero":"50-28","differential":"100-55","suspension-geometry":"LLLL","suspension":"41-28-1-12-22-46","brakes":"100q 97r/56-57","tyres-q":"29.5-20.5","tyres-r":"29.5-20.5","compounds":"C3-C5","strategy-50":"MH 6-9, HM 21-23","laps-50":29,"creation-date":"46199","notes":"beware chicane launchpad kerbs. Undercuts are gigantic and overtaking is at best difficult"},
+    {"circuit":"Azerbaijan","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":26,"creation-date":null,"notes":null},
+    {"circuit":"Singapore","aero":"50-39","differential":"100-45","suspension-geometry":"LLLL","suspension":"41-41-1-1-21-44","brakes":"98/56","tyres-q":"26.0 20.5","tyres-r":"29.5 20.5","compounds":"C3-C5","strategy-50":"MH 11-13","laps-50":31,"creation-date":"46207","notes":null},
+    {"circuit":"United States","aero":"50-34","differential":"100-50","suspension-geometry":"LLLL","suspension":"41-41-1-4-20-45","brakes":"100q 97r/56-57","tyres-q":"29.5 20.5","tyres-r":"29.5 20.5","compounds":"C1, C3, C4","strategy-50":"MH 8-11, HM 16-19","laps-50":28,"creation-date":"46201","notes":"HM > MH. Be careful with traction zones"},
+    {"circuit":"Mexico","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":36,"creation-date":null,"notes":null},
+    {"circuit":"Brazil","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C2-C4","strategy-50":null,"laps-50":36,"creation-date":null,"notes":null},
+    {"circuit":"Las Vegas","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":25,"creation-date":null,"notes":null},
+    {"circuit":"Qatar","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C1-C3","strategy-50":null,"laps-50":29,"creation-date":null,"notes":null},
+    {"circuit":"Abu Dhabi","aero":null,"differential":null,"suspension-geometry":null,"suspension":null,"brakes":null,"tyres-q":null,"tyres-r":null,"compounds":"C3-C5","strategy-50":null,"laps-50":29,"creation-date":null,"notes":null},
+    {"circuit":"Imola","aero":"50-24","differential":"100-40","suspension-geometry":"LLLL","suspension":"41-41-1-1-22-46","brakes":"97/57","tyres-q":"28.5 20.5","tyres-r":"28.5 20.5","compounds":"C3-C5","strategy-50":"MH 11-13, HM 19-20 / minimum fuel","laps-50":32,"creation-date":"46205","notes":"enough underfuel to supply a small nation"}
+  ],
+  "tyreTemps": [
+    {"compound":"C1","temp-range-c":"95 - 115","temp-range-f":"203 - 239"},
+    {"compound":"C2","temp-range-c":"85 - 115","temp-range-f":"185 - 239"},
+    {"compound":"C3","temp-range-c":"85 - 95","temp-range-f":"185 - 203"},
+    {"compound":"C4","temp-range-c":"75 - 95","temp-range-f":"167 - 203"},
+    {"compound":"C5","temp-range-c":"75 - 85","temp-range-f":"167 - 185"},
+    {"compound":"C6","temp-range-c":"65 - 85","temp-range-f":"149 - 185"},
+    {"compound":"Intermediate","temp-range-c":"55 - 75","temp-range-f":"131 - 167"},
+    {"compound":"Full Wet","temp-range-c":"55 - 65","temp-range-f":"131 - 149"}
+  ],
+  "faq": [
+    {"question":"Why are the wing gaps so high?","answer":"F1 26's cars are more understeery than previous games due to a cut in downforce. This is to regain the lost rotation from the downforce cuts in reality, and because straight mode nullifies the drag penalty we carry"},
+    {"question":"Why are we running <100 brake pressure?","answer":"Thanks to the new cars being incredibly slippery on the brakes, it is now preferred not to run 100% brake pressure for stability"}
+  ],
+  "fixes": []
+}

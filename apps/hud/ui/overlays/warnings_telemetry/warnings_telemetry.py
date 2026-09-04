@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) [2025] [Ashwin Natarajan]
+# Copyright (c) [2026] [Ashwin Natarajan]
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +22,34 @@
 
 # -------------------------------------- IMPORTS -----------------------------------------------------------------------
 
-from .base.base_overlay import BaseOverlay
-from .circuit_info.circuit_info import CircuitInfoOverlay
-from .hud_overlay.hud_overlay import HudOverlay
-from .input_telemetry.input_telemetry import InputTelemetryOverlay
-from .lap_timer.lap_timer_overlay import LapTimerOverlay
-from .mfd.mfd import MfdOverlay
-from .pu.pu import PuOverlay
-from .timing_tower.timing_tower_overlay import TimingTowerOverlay
-from .track_radar.track_radar import TrackRadarOverlay
-from .warnings_telemetry import WarningsTelemetryOverlay
-# -------------------------------------- EXPORTS -----------------------------------------------------------------------
+from pathlib import Path
+from typing import final
 
-__all__ = [
-    "BaseOverlay",
-    "InputTelemetryOverlay",
-    "LapTimerOverlay",
-    "MfdOverlay",
-    "TimingTowerOverlay",
-    "TrackRadarOverlay",
-    "HudOverlay",
-    "CircuitInfoOverlay",
-    "PuOverlay",
-    "WarningsTelemetryOverlay",
-]
+from lib.config import OverlayId, PngSettings
+from lib.logger import PngLogger
+
+from ...hf_types import HudOverlayData
+from ..base.base_overlay import BaseOverlay
+
+# -------------------------------------- CLASSES -----------------------------------------------------------------------
+
+class WarningsTelemetryOverlay(BaseOverlay):
+    """Transparent warning counter overlay."""
+
+    QML_FILE = Path(__file__).parent / "warnings_telemetry.qml"
+    OVERLAY_ID = OverlayId.WARNINGS_TELEMETRY
+
+    ANIMATION_DRIVEN = True
+
+    def __init__(self, settings: PngSettings, logger: PngLogger) -> None:
+        super().__init__(settings, logger)
+        self.subscribe_hf(HudOverlayData)
+
+    @final
+    def render_frame(self):
+        data = self.get_latest_hf_data(HudOverlayData)
+        if not data:
+            return
+
+        self.set_qml_property("cornerCuttingWarnings", data.corner_cutting_warnings)
+        self.set_qml_property("trackLimitsWarnings", data.track_limits_warnings)

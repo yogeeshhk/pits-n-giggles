@@ -134,7 +134,6 @@ class HudOverlay(BaseOverlay):
         self.set_qml_property("ersDeployedPct", ers_dep_pct)
         self.set_qml_property("ersMode",        data.ers_mode)
         self.set_qml_property("ersColor",       get_ers_mode_color(data.ers_mode, f26.enabled, f26.overtake_active))
-        self.set_qml_property("tlWarnings",     data.tl_warnings)
         self.set_qml_property("trackTempC",     data.track_temp)
         self.set_qml_property("airTempC",       data.air_temp)
 

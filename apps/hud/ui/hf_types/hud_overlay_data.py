@@ -68,7 +68,8 @@ class HudOverlayData(HighFreqBase):
     ers_deployed_j: float
     ers_rem_j: float
     ers_mode: str
-    tl_warnings: int
+    corner_cutting_warnings: int
+    track_limits_warnings: int
     circuit_pos_m: float
     circuit: str
     circuit_num: int
@@ -97,7 +98,8 @@ class HudOverlayData(HighFreqBase):
             self.ers_deployed_j,
             self.ers_rem_j,
             self.ers_mode,
-            self.tl_warnings,
+            self.corner_cutting_warnings,
+            self.track_limits_warnings,
             self.circuit_pos_m,
             self.circuit,
             self.circuit_num,
@@ -126,7 +128,14 @@ class HudOverlayData(HighFreqBase):
             ers_deployed_j=hud_data["ers-deployed"],
             ers_rem_j=hud_data["ers-remaining"],
             ers_mode=hud_data["ers-mode"],
-            tl_warnings=pens_stats_data["corner-cutting-warnings"],
+            corner_cutting_warnings=pens_stats_data["corner-cutting-warnings"],
+            track_limits_warnings=pens_stats_data.get(
+                "track-limits-warnings",
+                max(
+                    0,
+                    pens_stats_data["total-warnings"] - pens_stats_data["corner-cutting-warnings"],
+                ),
+            ),
             circuit_pos_m=hud_data["circuit-position"],
             circuit=json_data["circuit-enum-name"],
             circuit_num=json_data["circuit-enum-value"],

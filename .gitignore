@@ -8,6 +8,8 @@ launch.json
 *.tar.xz
 *.tar.gz
 *.json
+!apps/frontend/data/f1_25_setups.json
+!apps/frontend/data/f1_26_setups.json
 *.f1pcap
 *.txt
 *.ini

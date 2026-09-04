@@ -1,6 +1,7 @@
 loadPreferences();
 // Initialize renderer
 const iconCache = new IconCache();
+window.setupGuide = new SetupGuide();
 const telemetryRenderer = new TelemetryRenderer(iconCache);
 window.telemetryRenderer = telemetryRenderer;
 telemetryRenderer.updateConnectedStatus(false);

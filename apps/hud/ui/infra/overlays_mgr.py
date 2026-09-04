@@ -35,7 +35,8 @@ from ...common import get_ref_row, get_ref_row_index, is_tt_session
 from ..hf_types import HudOverlayData, InputTelemetryData, LiveSessionMotionInfo
 from ..overlays import (BaseOverlay, CircuitInfoOverlay, HudOverlay,
                         InputTelemetryOverlay, LapTimerOverlay, MfdOverlay,
-                        PuOverlay, TimingTowerOverlay, TrackRadarOverlay)
+                        PuOverlay, TimingTowerOverlay, TrackRadarOverlay,
+                        WarningsTelemetryOverlay)
 from ..overlays.mfd.pages import (FuelInfoPage, LapTimesPage, MfdPageBase,
                                   PaceCompPage, PitRejoinPredictionPage,
                                   StandalonePageHost, TrafficMonitorPage,
@@ -49,7 +50,7 @@ class OverlaysMgr:
 
     OVERLAY_CLASSES: List[Type[BaseOverlay]] = [
         LapTimerOverlay, TimingTowerOverlay, InputTelemetryOverlay, TrackRadarOverlay,
-        HudOverlay, CircuitInfoOverlay, PuOverlay, MfdOverlay,
+        HudOverlay, WarningsTelemetryOverlay, CircuitInfoOverlay, PuOverlay, MfdOverlay,
     ]
     STANDALONE_PAGE_CLASSES: List[Type[MfdPageBase]] = [
         FuelInfoPage, TyreInfoPage, LapTimesPage, WeatherForecastPage,

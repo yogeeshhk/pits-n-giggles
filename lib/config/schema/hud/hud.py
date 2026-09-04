@@ -371,6 +371,16 @@ class HudSettings(ConfigDiffMixin, BaseModel):
     hud_overlay_toggle_udp_action_code: Optional[int] = udp_action_field(
         description="Toggle HUD overlay UDP action code", group="HUD Overlay")
 
+    # ============== WARNINGS TELEMETRY OVERLAY ==============
+    show_warnings_telemetry: bool = overlay_enable_field(
+        description="Enable warnings telemetry overlay",
+        default=False,
+        group="Warnings Telemetry",
+        preview_image="assets/overlay-previews/hud-overlay.png",
+    )
+    warnings_telemetry_toggle_udp_action_code: Optional[int] = udp_action_field(
+        description="Toggle warnings telemetry overlay UDP action code", group="Warnings Telemetry")
+
     @property
     def hud_overlay_speed_unit_kmph(self) -> bool:
         """True if the speed unit is km/h"""
@@ -660,6 +670,7 @@ class HudSettings(ConfigDiffMixin, BaseModel):
             OverlayId.INPUT_TELEMETRY: self.show_input_overlay,
             OverlayId.TRACK_RADAR:     self.show_track_radar_overlay,
             OverlayId.HUD:             self.show_hud_overlay,
+            OverlayId.WARNINGS_TELEMETRY: self.show_warnings_telemetry,
             OverlayId.CIRCUIT_INFO:    self.show_circuit_info,
             OverlayId.PU:              self.show_pu_info,
             OverlayId.FUEL_INFO:       self.show_fuel_info,

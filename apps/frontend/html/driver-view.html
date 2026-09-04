@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/barChart.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/columnConfig.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/raceStatsModal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/setupGuide.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha384-H6KKS1H1WwuERMSm+54dYLzjg0fKqRK5ZRyASdbrI/lwrCc6bXEmtGYr5SwvP1pZ" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
@@ -66,6 +67,9 @@
               <i class="bi bi-wrench-adjustable"></i>
           </a>
           {% endif %}
+          <button id="setup-guide-btn" class="settings-button" data-bs-toggle="modal" data-bs-target="#setupGuideModal" title="Show F1 setup guide">
+            <i class="bi bi-sliders"></i>
+          </button>
           <button id="race-stats-btn" class="settings-button" data-bs-toggle="tooltip" data-bs-title="Show Race Stats">
             🏁
           </button>
@@ -572,6 +576,48 @@
       </div>
     </div>
 
+    <!-- F1 25 Setup Guide Modal -->
+    <div class="modal fade setup-guide-modal" id="setupGuideModal" tabindex="-1" aria-labelledby="setupGuideModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="setupGuideModalLabel">F1 Setup Guide</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="setup-guide-controls">
+              <label for="setup-guide-game-select" class="form-label mb-0">Game</label>
+              <select id="setup-guide-game-select" class="form-select">
+                <option value="2025">F1 25</option>
+                <option value="2026">F1 26</option>
+              </select>
+              <label for="setup-guide-circuit-select" class="form-label mb-0">Circuit</label>
+              <select id="setup-guide-circuit-select" class="form-select"></select>
+            </div>
+            <div id="setup-guide-empty" class="text-secondary">Loading setup guide...</div>
+            <div id="setup-guide-content" style="display: none;"></div>
+
+            <div class="setup-guide-section-title">Tyre Temperature Windows</div>
+            <div class="table-responsive">
+              <table class="table table-sm setup-guide-temp-table">
+                <thead>
+                  <tr>
+                    <th>Compound</th>
+                    <th>Temp C</th>
+                    <th>Temp F</th>
+                  </tr>
+                </thead>
+                <tbody id="setup-guide-temp-table"></tbody>
+              </table>
+            </div>
+
+            <div class="setup-guide-section-title">Handling Fixes</div>
+            <div id="setup-guide-fixes" class="setup-guide-fixes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
       <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -654,6 +700,7 @@
     <script src="{{ url_for('static', filename='js/raceTableRowPopulator.js') }}"></script>
     <script src="{{ url_for('static', filename='js/populateRaceControlMessagesTab.js') }}"></script>
     <script src="{{ url_for('static', filename='js/timeTrialDataPopulator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/setupGuide.js') }}"></script>
 {% endblock %}
 {% block extra_scripts %}
     <script src="{{ url_for('static', filename='js/telemetryRenderer.js') }}"></script>

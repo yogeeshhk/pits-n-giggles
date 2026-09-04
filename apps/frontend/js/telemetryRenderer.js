@@ -105,6 +105,9 @@ class TelemetryRenderer {
 
     // update the header section regardless of mode
     this.updateHeader(incomingData);
+    if (window.setupGuide) {
+      window.setupGuide.updateFromTelemetry(incomingData);
+    }
   }
 
   updateTimeTrialData(incomingData) {

@@ -72,6 +72,7 @@ class UdpActionCodes:
     toggle_input_overlay: Optional[int] = None
     mfd_interaction: Optional[int] = None
     toggle_hud_overlay: Optional[int] = None
+    toggle_warnings_telemetry_overlay: Optional[int] = None
     toggle_circuit_info_overlay: Optional[int] = None
     toggle_pu_overlay: Optional[int] = None
 
@@ -88,6 +89,7 @@ class UdpActionCodes:
         "input_overlay_toggle_udp_action_code": "toggle_input_overlay",
         "mfd_interaction_udp_action_code": "mfd_interaction",
         "hud_overlay_toggle_udp_action_code": "toggle_hud_overlay",
+        "warnings_telemetry_toggle_udp_action_code": "toggle_warnings_telemetry_overlay",
         "circuit_info_toggle_udp_action_code": "toggle_circuit_info_overlay",
         "pu_toggle_udp_action_code": "toggle_pu_overlay",
     }
@@ -211,6 +213,7 @@ class F1TelemetryHandler:
             toggle_input_overlay=settings.HUD.input_overlay_toggle_udp_action_code,
             mfd_interaction=settings.HUD.mfd_interaction_udp_action_code,
             toggle_hud_overlay=settings.HUD.hud_overlay_toggle_udp_action_code,
+            toggle_warnings_telemetry_overlay=settings.HUD.warnings_telemetry_toggle_udp_action_code,
             toggle_circuit_info_overlay=settings.HUD.circuit_info_toggle_udp_action_code,
             toggle_pu_overlay=settings.HUD.pu_toggle_udp_action_code,
         )
@@ -720,6 +723,11 @@ class F1TelemetryHandler:
                                     self.m_udp_action_codes.toggle_hud_overlay,
                                     'Toggle HUD overlay',
                                     lambda: self._processToggleHud(OverlayId.HUD))
+
+            await self._handle_udp_action(buttons,
+                                    self.m_udp_action_codes.toggle_warnings_telemetry_overlay,
+                                    'Toggle warnings telemetry overlay',
+                                    lambda: self._processToggleHud(OverlayId.WARNINGS_TELEMETRY))
 
             await self._handle_udp_action(buttons,
                                     self.m_udp_action_codes.toggle_circuit_info_overlay,

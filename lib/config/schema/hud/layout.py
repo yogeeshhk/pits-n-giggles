@@ -39,6 +39,7 @@ class OverlayId(str, Enum):
     INPUT_TELEMETRY  = "input_telemetry"
     TRACK_RADAR      = "track_radar"
     HUD              = "hud_overlay"
+    WARNINGS_TELEMETRY = "warnings_telemetry"
     CIRCUIT_INFO     = "circuit_info"
     PU               = "pu"
     FUEL_INFO        = "fuel_info"
@@ -60,6 +61,7 @@ class OverlayId(str, Enum):
             OverlayId.INPUT_TELEMETRY: "Input Telemetry",
             OverlayId.TRACK_RADAR:     "Track Radar",
             OverlayId.HUD:             "HUD",
+            OverlayId.WARNINGS_TELEMETRY: "Warnings Telemetry",
             OverlayId.CIRCUIT_INFO:    "Circuit Info",
             OverlayId.PU:              "Power Unit",
             OverlayId.FUEL_INFO:       "Fuel Info",
@@ -128,6 +130,10 @@ DEFAULT_OVERLAY_LAYOUT: Dict[str, OverlayPosition] = {
     OverlayId.HUD: OverlayPosition(
         x=300,
         y=600,
+    ),
+    OverlayId.WARNINGS_TELEMETRY: OverlayPosition(
+        x=300,
+        y=540,
     ),
     OverlayId.CIRCUIT_INFO: OverlayPosition(
         x=600,

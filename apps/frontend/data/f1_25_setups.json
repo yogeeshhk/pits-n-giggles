@@ -1,0 +1,51 @@
+{
+  "game": "F1 25",
+  "source": "f1_25_setups.xlsx",
+  "setups": [
+    {"circuit":"Australia","aero":"13-3q 9-3r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54-55","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 11-13/HM 16-18/MHH 8,19","laps-50":29,"creation-date":"Theorycrafted","notes":"c3 good c4 bad"},
+    {"circuit":"China","aero":"27-18q 22-13r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/53-55","tyres-q":"max min","tyres-r":"max min","compounds":"C2-C4","strategy-50":"MH 10-12/HM 16-17","laps-50":28,"creation-date":"Theorycrafted","notes":"low tire wear, easy onestop"},
+    {"circuit":"Japan","aero":"31-20q 21-9r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-22-40","brakes":"100/54-55","tyres-q":"26.0 min","tyres-r":"max min","compounds":"C1-C3","strategy-50":"MH 10-12/HM 15-17/SMM 7,17","laps-50":27,"creation-date":"Theorycrafted","notes":"goat"},
+    {"circuit":"Bahrain","aero":"28-21q 21-13r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/55-56","tyres-q":"min all","tyres-r":"26.0 min","compounds":"C1-C3","strategy-50":"HM 17-18/MH 11-12/SMM 7,18","laps-50":29,"creation-date":"Theorycrafted","notes":"satans own track"},
+    {"circuit":"Saudi Arabia","aero":"11-0","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/52-54","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 11-12/HM 13-14/MHH 6,16","laps-50":25,"creation-date":"Theorycrafted","notes":"goat track"},
+    {"circuit":"Miami","aero":"11-2","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-21-40","brakes":"100/54-56","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 12-13/HM 16-17/MHH 7,18","laps-50":29,"creation-date":"Theorycrafted","notes":"piss track"},
+    {"circuit":"Imola","aero":"28-17q 21-11r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/53-54","tyres-q":"24.0 min","tyres-r":"max min","compounds":"C4-C6","strategy-50":"MH 11-13(12)/HM 18-20/MHH 8,20","laps-50":32,"creation-date":"Theorycrafted","notes":"goat track"},
+    {"circuit":"Monaco","aero":"50-50","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/50-53","tyres-q":"min all","tyres-r":"min all","compounds":"C4-C6","strategy-50":"MHH 5-7, 22-24","laps-50":39,"creation-date":"Theorycrafted","notes":"piss track; undercut to hards is OP"},
+    {"circuit":"Spain","aero":"37-25q 29-20r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/52-54","tyres-q":"max min","tyres-r":"max min","compounds":"C1-C3","strategy-50":"MH 13-15/HM 17-18/SMM 8,21","laps-50":33,"creation-date":"Theorycrafted","notes":"good luck overtaking"},
+    {"circuit":"Canada","aero":"29-17","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54-56","tyres-q":"24.0 min","tyres-r":"max min","compounds":"C4-C6","strategy-50":"MHH 7-9, 21-23/HHM 12-14, 26-28","laps-50":35,"creation-date":"Theorycrafted","notes":"mandatory 2 stop. Forget the onestop"},
+    {"circuit":"Austria","aero":"21-10","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/53-55","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 15-16/MHH 9,23","laps-50":36,"creation-date":"Theorycrafted","notes":"bumpy"},
+    {"circuit":"Great Britain","aero":"11-0","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/52-54","tyres-q":"max min","tyres-r":"max min","compounds":"C2-C4","strategy-50":"MH 10-11/HM 15-16/MHH 6,16","laps-50":26,"creation-date":"Theorycrafted","notes":"good luck overtaking"},
+    {"circuit":"Belgium","aero":"5-0q 2-0r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-22-40","brakes":"100/53-55","tyres-q":"max all","tyres-r":"max all","compounds":"C1, C3, C4","strategy-50":"MH 8-10/HM 12-14/SMM 4,13","laps-50":22,"creation-date":"Theorycrafted","notes":"good luck overtaking"},
+    {"circuit":"Hungary","aero":"50-47","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/52-54","tyres-q":"min all","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 14-15/HM 20-21/MHH 9,23","laps-50":35,"creation-date":"Theorycrafted","notes":"yes, it overheats. But it's faster."},
+    {"circuit":"Netherlands","aero":"44-37","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/53","tyres-q":"max min","tyres-r":"max min","compounds":"C2-C4","strategy-50":"MH 15/MHH 9,23","laps-50":36,"creation-date":"Theorycrafted","notes":"tire saving for generations"},
+    {"circuit":"Monza","aero":"0-0","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-23-40","brakes":"100/53-56","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 10-11/MHH 7,17","laps-50":27,"creation-date":"Theorycrafted","notes":"tire saving festival"},
+    {"circuit":"Azerbaijan","aero":"0-2","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/55","tyres-q":"max min","tyres-r":"max min","compounds":"C4-C6","strategy-50":"MHH 5-7, 15-17/MH 10/HM 16","laps-50":26,"creation-date":"Theorycrafted","notes":"save rears, 1 stop is incredibly tight"},
+    {"circuit":"Singapore","aero":"48-50","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54-56","tyres-q":"min all","tyres-r":"min all","compounds":"C3-C5","strategy-50":"MH 14-15/HM 17-18/MHH if SC","laps-50":31,"creation-date":"Theorycrafted","notes":"actually tested in Q. Solid"},
+    {"circuit":"United States","aero":"37-22q 34-19r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(4r)-19-40","brakes":"100/53-54","tyres-q":"max min","tyres-r":"max min","compounds":"C1, C3, C4","strategy-50":"MH 12-13/HM 16-17/SMM 7,18","laps-50":28,"creation-date":"Theorycrafted","notes":"not a hard one-stopper, save S1"},
+    {"circuit":"Mexico","aero":"34-25q 13-11r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54-56","tyres-q":"max min","tyres-r":"max min","compounds":"C2, C4, C5","strategy-50":"MH 11-14/HM 22-25","laps-50":36,"creation-date":"Theorycrafted","notes":"ez onestop. Save rears with lico and slow-ish downshifts. Overheating unavoidable"},
+    {"circuit":"Brazil","aero":"24-15q 20-9r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54","tyres-q":"max min","tyres-r":"max min","compounds":"C2-C4","strategy-50":"MH 13-15/HM 19-22","laps-50":36,"creation-date":"Theorycrafted","notes":"easy one stopper now"},
+    {"circuit":"Las Vegas","aero":"2-0","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-23-40","brakes":"100/54-56","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 10-12/HM 14-16","laps-50":25,"creation-date":"Theorycrafted","notes":"passing is possible here"},
+    {"circuit":"Qatar","aero":"38-22q 34-22r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-19-40","brakes":"100/52-53","tyres-q":"max min","tyres-r":"max min","compounds":"C1-C3","strategy-50":"MH 11-12 / HM 17-18","laps-50":29,"creation-date":"Theorycrafted","notes":"management festival"},
+    {"circuit":"Abu Dhabi","aero":"32-22q 22-10r","differential":"100-20q 25r","suspension-geometry":"LLLL","suspension":"41-1-1-21(5r)-20-40","brakes":"100/54-56","tyres-q":"max min","tyres-r":"max min","compounds":"C3-C5","strategy-50":"MH 10-12/MHH 8,18/HM 17-19","laps-50":29,"creation-date":"Theorycrafted","notes":"dogshit track"}
+  ],
+  "tyreTemps": [
+    {"compound":"C1","temp-range-c":"95 - 115","temp-range-f":"203 - 239"},
+    {"compound":"C2","temp-range-c":"85 - 115","temp-range-f":"185 - 239"},
+    {"compound":"C3","temp-range-c":"85 - 95","temp-range-f":"185 - 203"},
+    {"compound":"C4","temp-range-c":"75 - 95","temp-range-f":"167 - 203"},
+    {"compound":"C5","temp-range-c":"75 - 85","temp-range-f":"167 - 185"},
+    {"compound":"C6","temp-range-c":"65 - 85","temp-range-f":"149 - 185"},
+    {"compound":"Intermediate","temp-range-c":"55 - 75","temp-range-f":"131 - 167"},
+    {"compound":"Full Wet","temp-range-c":"55 - 65","temp-range-f":"131 - 149"}
+  ],
+  "fixes": [
+    {"issue":"Understeer","fix":"more fw, less off diff, lower front arb, lower bbal"},
+    {"issue":"Oversteer","fix":"less fw, more off diff, more front arb, less rear arb"},
+    {"issue":"High-speed snap","fix":"more rw, less rear arb"},
+    {"issue":"Low-speed snap","fix":"more rw, higher rear rh"},
+    {"issue":"Poor traction","fix":"more rw, higher rear rh"},
+    {"issue":"Poor rotation","fix":"lower bbal, smoother on brakes"},
+    {"issue":"Unpredictable high-speed","fix":"check fw, rw and arbs"},
+    {"issue":"Unpredictable low-speed","fix":"check rw and arbs"},
+    {"issue":"Can't take kerbs others can","fix":"check rear pressures, check front rh"}
+  ]
+}

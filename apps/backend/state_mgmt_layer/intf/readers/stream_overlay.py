@@ -26,7 +26,8 @@ from typing import Any, Dict, List, Optional
 
 from apps.backend.state_mgmt_layer.data_per_driver import DataPerDriver
 from apps.backend.state_mgmt_layer.session_state import SessionState
-from lib.f1_types import CarStatusData
+from lib.f1_types import CarStatusData, PacketEventData
+from lib.race_ctrl.messages import MessageType, PenaltyRaceCtrlMsg
 
 from ..base import BaseAPI
 from .helpers.lap_time_history import LapTimeHistory
@@ -137,12 +138,14 @@ class StreamOverlayData(BaseAPI):
         """Prepares the player's penalties data.
         """
 
+        self.m_track_limits_warnings = 0
         if self.m_ref_obj and self.m_ref_obj.m_packet_copies.m_packet_lap_data:
-            self.m_penalties = self.m_ref_obj.m_packet_copies.m_packet_lap_data.m_penalties
-            self.m_total_warnings = self.m_ref_obj.m_packet_copies.m_packet_lap_data.m_totalWarnings
-            self.m_corner_cutting_warnings = self.m_ref_obj.m_packet_copies.m_packet_lap_data.m_cornerCuttingWarnings
-            self.m_num_dt = self.m_ref_obj.m_packet_copies.m_packet_lap_data.m_numUnservedDriveThroughPens
-            self.m_num_sg = self.m_ref_obj.m_packet_copies.m_packet_lap_data.m_numUnservedStopGoPens
+            observed_totals = self.m_ref_obj.m_warning_penalty_history.getObservedTotalsJSON()
+            self.m_penalties = observed_totals["time-penalties"]
+            self.m_total_warnings = observed_totals["total-warnings"]
+            self.m_corner_cutting_warnings = observed_totals["corner-cutting-warnings"]
+            self.m_num_dt = observed_totals["num-dt"]
+            self.m_num_sg = observed_totals["num-sg"]
             self.m_num_collisions = len(self.m_ref_obj.m_collision_records)
         else:
             self.m_penalties = 0
@@ -151,6 +154,26 @@ class StreamOverlayData(BaseAPI):
             self.m_num_dt = 0
             self.m_num_sg = 0
             self.m_num_collisions = 0
+
+        if self.m_ref_obj:
+            track_limits_infringements = {
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_GAINED_TIME),
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_OVERTAKE_SINGLE),
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_OVERTAKE_MULTIPLE),
+                str(PacketEventData.Penalty.InfringementType.LAP_INVALIDATED_CORNER_CUTTING),
+                str(PacketEventData.Penalty.InfringementType.LAP_INVALIDATED_RUNNING_WIDE),
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_RAN_WIDE_GAINED_TIME_MINOR),
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_RAN_WIDE_GAINED_TIME_SIGNIFICANT),
+                str(PacketEventData.Penalty.InfringementType.CORNER_CUTTING_RAN_WIDE_GAINED_TIME_EXTREME),
+            }
+            self.m_track_limits_warnings = sum(
+                1
+                for msg in self.m_ref_obj.m_race_ctrl.messages
+                if isinstance(msg, PenaltyRaceCtrlMsg)
+                and msg.message_type == MessageType.PENALTY
+                and msg.penalty_type == str(PacketEventData.Penalty.PenaltyType.WARNING)
+                and msg.infringement_type in track_limits_infringements
+            )
 
     def __initGForce(self) -> None:
         """Prepares the player's g-force data.
@@ -435,6 +458,7 @@ class StreamOverlayData(BaseAPI):
                 "time-penalties": self.m_penalties,
                 "total-warnings": self.m_total_warnings,
                 "corner-cutting-warnings": self.m_corner_cutting_warnings,
+                "track-limits-warnings": self.m_track_limits_warnings,
                 "unserved-drive-through-pens": self.m_num_dt,
                 "unserved-stop-go-pens": self.m_num_sg,
                 "num-collisions" : self.m_num_collisions,

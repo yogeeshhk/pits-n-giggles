@@ -60,7 +60,6 @@ Window {
     property real   ersDeployedPct: 0
     property string ersMode:        "None"
     property string ersColor:       "#4a5a6a"
-    property int    tlWarnings:     0
     property var    surplusFuel:    null
 
     property int    trackTempC:     0
@@ -428,34 +427,6 @@ Window {
                         RowLayout {
                             anchors.fill: parent
                             spacing: 0
-
-                            // ── Track limits ──────────────────────────────────
-                            Item {
-                                Layout.fillWidth:  true
-                                Layout.fillHeight: true
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 3
-
-                                    Image {
-                                        source:  "../../../../../assets/overlays/tl-warns.svg"
-                                        width:   root.infoRowSize
-                                        height:  root.infoRowSize
-                                        smooth:  true
-                                        mipmap:  true
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    Text {
-                                        text:            root.tlWarnings
-                                        font.family:     root.infoRowFont
-                                        font.pixelSize:  root.infoRowSize
-                                        font.bold:       true
-                                        color:           "#edf7ff"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-                            }
 
                             // ── Air temperature ───────────────────────────────
                             Item {

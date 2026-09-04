@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) [2025] [Ashwin Natarajan]
+# Copyright (c) [2026] [Ashwin Natarajan]
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# -------------------------------------- IMPORTS -----------------------------------------------------------------------
-
-from .base.base_overlay import BaseOverlay
-from .circuit_info.circuit_info import CircuitInfoOverlay
-from .hud_overlay.hud_overlay import HudOverlay
-from .input_telemetry.input_telemetry import InputTelemetryOverlay
-from .lap_timer.lap_timer_overlay import LapTimerOverlay
-from .mfd.mfd import MfdOverlay
-from .pu.pu import PuOverlay
-from .timing_tower.timing_tower_overlay import TimingTowerOverlay
-from .track_radar.track_radar import TrackRadarOverlay
 from .warnings_telemetry import WarningsTelemetryOverlay
-# -------------------------------------- EXPORTS -----------------------------------------------------------------------
 
-__all__ = [
-    "BaseOverlay",
-    "InputTelemetryOverlay",
-    "LapTimerOverlay",
-    "MfdOverlay",
-    "TimingTowerOverlay",
-    "TrackRadarOverlay",
-    "HudOverlay",
-    "CircuitInfoOverlay",
-    "PuOverlay",
-    "WarningsTelemetryOverlay",
-]
+__all__ = ["WarningsTelemetryOverlay"]

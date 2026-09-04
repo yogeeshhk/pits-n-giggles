@@ -1,0 +1,102 @@
+.setup-guide-modal .modal-content {
+  background: var(--f1-dark);
+  color: var(--f1-text);
+  border: 1px solid var(--f1-light-gray);
+}
+
+.setup-guide-modal .modal-header,
+.setup-guide-modal .modal-footer {
+  border-color: var(--f1-light-gray);
+}
+
+.setup-guide-modal .btn-close {
+  filter: invert(1);
+}
+
+.setup-guide-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.setup-guide-controls select {
+  max-width: 260px;
+  background-color: var(--f1-gray);
+  color: var(--f1-text);
+  border-color: var(--f1-light-gray);
+}
+
+.setup-guide-summary,
+.setup-guide-detail-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.setup-guide-summary {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin-bottom: 1rem;
+}
+
+.setup-guide-summary-item,
+.setup-guide-detail-item,
+.setup-guide-fix-item {
+  background: var(--f1-gray);
+  border: 1px solid var(--f1-light-gray);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.setup-guide-summary-item span,
+.setup-guide-detail-item span {
+  display: block;
+  color: var(--f1-text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.setup-guide-summary-item strong,
+.setup-guide-detail-item strong {
+  display: block;
+  margin-top: 0.25rem;
+  word-break: break-word;
+}
+
+.setup-guide-detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.setup-guide-section-title {
+  color: var(--f1-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.setup-guide-temp-table {
+  color: var(--f1-text);
+  margin-bottom: 0;
+}
+
+.setup-guide-temp-table th,
+.setup-guide-temp-table td {
+  background: transparent;
+  color: var(--f1-text);
+  border-color: var(--f1-light-gray);
+}
+
+.setup-guide-fixes {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.setup-guide-fix-item {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.35fr) 1fr;
+  gap: 0.75rem;
+}
+
+.setup-guide-fix-item span {
+  color: var(--f1-text-secondary);
+}

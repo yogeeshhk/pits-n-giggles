@@ -530,17 +530,14 @@ class DriversListRsp(BaseAPI):
         if not (lap_data := driver_data.m_packet_copies.m_packet_lap_data):
             return {
                 "corner-cutting-warnings": None,
+                "other-warnings": None,
+                "total-warnings": None,
                 "time-penalties": None,
                 "num-dt": None,
                 "num-sg": None,
             }
 
-        return {
-            "corner-cutting-warnings": self._getValueOrDefaultValue(lap_data.m_cornerCuttingWarnings),
-            "time-penalties": self._getValueOrDefaultValue(lap_data.m_penalties),
-            "num-dt": self._getValueOrDefaultValue(lap_data.m_numUnservedDriveThroughPens),
-            "num-sg": self._getValueOrDefaultValue(lap_data.m_numUnservedStopGoPens),
-        }
+        return driver_data.m_warning_penalty_history.getObservedTotalsJSON()
 
     def _getTyreInfoJSON(self, driver_data: DataPerDriver) -> Dict[str, Any]:
         """Extract tyre information section for JSON response."""
