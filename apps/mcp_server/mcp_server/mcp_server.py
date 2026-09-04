@@ -28,8 +28,10 @@ import inspect
 import logging
 import socket
 import time
-from typing import Annotated, Any, Callable, Dict, Literal
+from pathlib import Path
+from typing import Annotated, Any, Callable, Dict, List, Literal, Optional
 
+import apps.save_viewer.save_viewer_state as SaveViewerState
 import uvicorn
 from fastmcp import FastMCP
 from pydantic import Field
@@ -48,6 +50,8 @@ from .tools.get_driver_lap_times import (DRIVER_LAP_TIMES_OUTPUT_SCHEMA,
                                          get_driver_lap_times)
 from .tools.get_drivers_list import (DRIVERS_LIST_OUTPUT_SCHEMA,
                                      get_drivers_list)
+from .tools.get_f1_25_setup_guide import (
+    F1_SETUP_GUIDE_OUTPUT_SCHEMA, get_f1_setup_guide)
 from .tools.get_fuel_info import FUEL_INFO_OUTPUT_SCHEMA, get_fuel_info
 from .tools.get_player_driver_info import (PLAYER_DRIVER_INFO_OUTPUT_SCHEMA,
                                            get_player_driver_info)
@@ -60,8 +64,22 @@ from .tools.get_session_events_for_driver import (
     DRIVER_SESSION_EVENTS_OUTPUT_SCHEMA, get_session_events_for_driver)
 from .tools.get_session_info import (SESSION_INFO_OUTPUT_SCHEMA,
                                      get_session_info)
+from .tools.get_saved_sessions import (
+    SAVED_SESSION_OUTPUT_SCHEMA, SAVED_SESSIONS_LIST_OUTPUT_SCHEMA,
+    get_saved_session_driver_info, get_saved_session_summary,
+    list_saved_sessions)
 from .tools.get_tyre_wear import TYRE_WEAR_OUTPUT_SCHEMA, get_tyre_wear
+from .tools.race_analysis import (
+    COACH_NOTES_OUTPUT_SCHEMA, DATA_QUALITY_REPORT_OUTPUT_SCHEMA,
+    EVENT_TIMELINE_OUTPUT_SCHEMA, PACE_ANALYSIS_OUTPUT_SCHEMA,
+    PIT_STOPS_OUTPUT_SCHEMA, PLAYER_RACE_SUMMARY_OUTPUT_SCHEMA,
+    RIVAL_COMPARISON_OUTPUT_SCHEMA, STRATEGY_SUMMARY_OUTPUT_SCHEMA,
+    compare_driver_to_rivals, get_coach_notes, get_data_quality_report,
+    get_driver_event_timeline, get_driver_pace_analysis,
+    get_pit_stops, get_player_race_summary, get_strategy_summary)
 
+MAX_CAR_INDEX = 24
+DriverIndex = Annotated[int, Field(ge=0, le=MAX_CAR_INDEX)]
 TransportType = Literal["http", "stdio"]
 
 # -------------------------------------- FUNCTIONS ---------------------------------------------------------------------
@@ -112,6 +130,7 @@ TYRE WEAR THRESHOLDS:
         dealer: IpcDealerAsync,
         logger: logging.Logger,
         version: str,
+        session_dir: Path,
         *,
         transport: TransportType = "stdio",
         host: str = "127.0.0.1",
@@ -123,8 +142,10 @@ TYRE WEAR THRESHOLDS:
         self.host = host
         self.port = port
         self.dealer = dealer
+        self.session_dir = session_dir
 
         self.stats = EventCounter()
+        SaveViewerState.init_state(logger)
 
         # FastMCP server
         self.mcp = FastMCP(
@@ -187,6 +208,46 @@ TYRE WEAR THRESHOLDS:
         async def get_session_info_tool():
             rsp = get_session_info(self.logger)
             self.logger.debug("get_session_info called: available=%s", rsp.get("available", False))
+            return rsp
+
+        @self._tool(
+            name="get_f1_setup_guide",
+            description=(
+                "Get the bundled F1 setup guide derived from f1_25_setups.xlsx or f1_26_setups.xlsx. "
+                "Pass a circuit name to retrieve recommended aero, differential, suspension, brakes, "
+                "tyre pressures, compounds, 50% strategy, lap count, and notes for that circuit. "
+                "Pass game_year=2025 or game_year=2026. If game_year or circuit is omitted, "
+                "the current live session is used when available. "
+                "Unavailable F1 26 fields are returned as null and listed in unavailable_fields. "
+                "Set include_all=true to return every setup for the selected guide."
+            ),
+            title="F1 Setup Guide",
+            tags={"setup", "f1-25", "f1-26", "strategy", "circuit"},
+            output_schema=F1_SETUP_GUIDE_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="F1 Setup Guide",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def get_f1_setup_guide_tool(
+            circuit: Annotated[Optional[str], Field(description="Optional circuit name. If omitted, the current live session circuit is used when available.")] = None,
+            game_year: Annotated[Optional[int], Field(ge=2025, le=2026, description="Setup guide year. Use 2025 for F1 25 or 2026 for F1 26. If omitted, the current live session game year is used when available.")] = None,
+            include_all: Annotated[bool, Field(description="Return all setups for the selected game year in addition to the matched circuit setup.")] = False,
+        ) -> Dict[str, Any]:
+            rsp = get_f1_setup_guide(
+                logger=self.logger,
+                circuit=circuit,
+                game_year=game_year,
+                include_all=include_all,
+            )
+            self.logger.debug(
+                "get_f1_setup_guide called: circuit=%s game_year=%s include_all=%s ok=%s",
+                circuit,
+                game_year,
+                include_all,
+                rsp.get("ok", False),
+            )
             return rsp
 
         @self._tool(
@@ -272,7 +333,7 @@ TYRE WEAR THRESHOLDS:
             ),
         )
         async def handle_get_driver_lap_times(
-            driver_index: Annotated[int, Field(ge=0, le=21, description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
         ) -> Dict[str, Any]:
             self.logger.debug("get_driver_lap_times called: driver_index=%s", driver_index)
             return await get_driver_lap_times(
@@ -308,7 +369,7 @@ TYRE WEAR THRESHOLDS:
             ),
         )
         async def handle_get_session_events_for_driver(
-            driver_index: Annotated[int, Field(ge=0, le=21, description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
         ) -> Dict[str, Any]:
             self.logger.debug("get_session_events_for_driver called: driver_index=%s", driver_index)
             return await get_session_events_for_driver(
@@ -389,7 +450,7 @@ TYRE WEAR THRESHOLDS:
             ),
         )
         async def handle_get_fuel_info(
-            driver_index: Annotated[int, Field(ge=0, le=21, description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
         ) -> Dict[str, Any]:
             self.logger.debug("get_fuel_info called: driver_index=%s", driver_index)
             return get_fuel_info(logger=self.logger, driver_index=driver_index)
@@ -438,7 +499,7 @@ TYRE WEAR THRESHOLDS:
             ),
         )
         async def handle_get_tyre_wear(
-            driver_index: Annotated[int, Field(ge=0, le=21, description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
         ) -> Dict[str, Any]:
             self.logger.debug("get_tyre_wear called: driver_index=%s", driver_index)
             return get_tyre_wear(logger=self.logger, driver_index=driver_index)
@@ -469,12 +530,280 @@ TYRE WEAR THRESHOLDS:
             ),
         )
         async def handle_get_car_damage(
-            driver_index: Annotated[int, Field(ge=0, le=21, description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
         ) -> Dict[str, Any]:
             self.logger.debug("get_car_damage called: driver_index=%s", driver_index)
             return await get_car_damage(
                 dealer=self.dealer,
                 logger=self.logger,
+                driver_index=driver_index,
+            )
+
+        @self._tool(
+            name="get_player_race_summary",
+            description=(
+                "Get a consolidated race-review summary for the player or currently-spectated driver. "
+                "Includes final/start position, positions gained or lost, best lap, clean race pace "
+                "excluding pit laps, pit stops, penalties, damage, fuel remaining, tyre wear summary, "
+                "and key events. Use this first for post-race reviews instead of stitching several tools together."
+            ),
+            title="Player Race Summary",
+            tags={"player", "race", "summary", "review", "pace", "strategy"},
+            output_schema=PLAYER_RACE_SUMMARY_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Player Race Summary",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_player_race_summary() -> Dict[str, Any]:
+            self.logger.debug("get_player_race_summary called")
+            return await get_player_race_summary(dealer=self.dealer, logger=self.logger)
+
+        @self._tool(
+            name="get_pit_stops",
+            description=(
+                "Detect pit stops for a driver using pit-lane/tyre-change events, abnormal lap-time spikes, "
+                "tyre compound or age resets, top-speed drops, and position loss. "
+                "Use this when a lap looks slow and you need to distinguish a pit stop from a mistake or incident."
+            ),
+            title="Driver Pit Stop Detector",
+            tags={"driver", "pit", "strategy", "stints"},
+            output_schema=PIT_STOPS_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Pit Stop Detector",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_pit_stops(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_pit_stops called: driver_index=%s", driver_index)
+            return await get_pit_stops(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="get_driver_pace_analysis",
+            description=(
+                "Analyze a driver's clean pace. Returns fastest lap, median lap, average lap, "
+                "average excluding pit laps, lap-time consistency/std dev, stint pace, personal-best sector laps, "
+                "and invalid laps removed."
+            ),
+            title="Driver Clean Pace Analysis",
+            tags={"driver", "pace", "laps", "consistency", "stints"},
+            output_schema=PACE_ANALYSIS_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Clean Pace Analysis",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_driver_pace_analysis(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_driver_pace_analysis called: driver_index=%s", driver_index)
+            return await get_driver_pace_analysis(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="get_driver_event_timeline",
+            description=(
+                "Classify raw race-control messages for a driver into readable event phases: overtakes made/lost, "
+                "pit stops, penalties, fastest laps, damage, safety car, DRS enabled, and tyre changes."
+            ),
+            title="Driver Event Timeline",
+            tags={"driver", "events", "timeline", "raceControl"},
+            output_schema=EVENT_TIMELINE_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Event Timeline",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_driver_event_timeline(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_driver_event_timeline called: driver_index=%s", driver_index)
+            return await get_driver_event_timeline(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="get_strategy_summary",
+            description=(
+                "Summarize a driver's strategy and stints. Returns stint compounds, lap ranges, average pace, pit laps, "
+                "undercut/overcut position effect, tyre wear per stint, and compound comparison."
+            ),
+            title="Driver Strategy Summary",
+            tags={"driver", "strategy", "stints", "tyres", "pit"},
+            output_schema=STRATEGY_SUMMARY_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Strategy Summary",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_strategy_summary(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_strategy_summary called: driver_index=%s", driver_index)
+            return await get_strategy_summary(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="compare_driver_to_rivals",
+            description=(
+                "Compare one driver with nearby rivals or an explicit rival list. Returns best-lap gap, average clean "
+                "pace gap, sector comparison, top-speed comparison, tyre wear comparison, and ERS/fuel at finish."
+            ),
+            title="Driver Rival Comparison",
+            tags={"driver", "compare", "rivals", "pace", "sectors"},
+            output_schema=RIVAL_COMPARISON_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Rival Comparison",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_compare_driver_to_rivals(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+            rival_indices: Annotated[Optional[List[DriverIndex]], Field(description="Optional list of rival driver indices. If omitted, nearby rivals by position are used.")] = None,
+        ) -> Dict[str, Any]:
+            self.logger.debug(
+                "compare_driver_to_rivals called: driver_index=%s rival_indices=%s",
+                driver_index,
+                rival_indices,
+            )
+            return await compare_driver_to_rivals(
+                dealer=self.dealer,
+                logger=self.logger,
+                driver_index=driver_index,
+                rival_indices=rival_indices,
+            )
+
+        @self._tool(
+            name="get_data_quality_report",
+            description=(
+                "Report telemetry confidence/anomaly flags such as missing top-speed data, null delta-to-leader, "
+                "and session-state inconsistencies. Use this before making strong claims from incomplete data."
+            ),
+            title="Data Quality Report",
+            tags={"quality", "confidence", "anomaly", "data"},
+            output_schema=DATA_QUALITY_REPORT_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Data Quality Report",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_data_quality_report() -> Dict[str, Any]:
+            self.logger.debug("get_data_quality_report called")
+            return await get_data_quality_report(dealer=self.dealer, logger=self.logger)
+
+        @self._tool(
+            name="get_coach_notes",
+            description=(
+                "Generate natural-language-ready structured coaching notes for a driver. "
+                "Returns what went well, what cost time, where to improve, one-lap pace, race management, "
+                "and next race focus."
+            ),
+            title="Driver Coach Notes",
+            tags={"driver", "coach", "notes", "review", "pace"},
+            output_schema=COACH_NOTES_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Driver Coach Notes",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_coach_notes(
+            driver_index: Annotated[DriverIndex, Field(description="Driver index. Use get_drivers_list to resolve a name to an index.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_coach_notes called: driver_index=%s", driver_index)
+            return await get_coach_notes(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="list_saved_sessions",
+            description=(
+                "List saved historical sessions from disk, newest first. "
+                "Returns stable session slugs plus metadata such as track, session type, date, "
+                "formula, lap counts, and best lap/sector/pace fields where available. "
+                "Use this first when the user asks about a previous, saved, historical, or past session."
+            ),
+            title="Saved Sessions List",
+            tags={"saved", "history", "sessions", "previous"},
+            output_schema=SAVED_SESSIONS_LIST_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Saved Sessions List",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_list_saved_sessions(
+            limit: Annotated[int, Field(ge=1, le=100, description="Maximum number of saved sessions to return.")] = 20,
+            offset: Annotated[int, Field(ge=0, description="Number of saved sessions to skip from the newest-first list.")] = 0,
+        ) -> Dict[str, Any]:
+            self.logger.debug("list_saved_sessions called: limit=%s offset=%s", limit, offset)
+            return await list_saved_sessions(
+                session_dir=self.session_dir,
+                logger=self.logger,
+                limit=limit,
+                offset=offset,
+            )
+
+        @self._tool(
+            name="get_saved_session_summary",
+            description=(
+                "Get session-level data for a saved historical session by slug. "
+                "Includes the saved telemetry table, session metadata, fastest records, "
+                "overtake records, position history, tyre stint history, speed trap records, "
+                "custom markers, and race-control data if it was saved."
+            ),
+            title="Saved Session Summary",
+            tags={"saved", "history", "summary", "race"},
+            output_schema=SAVED_SESSION_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Saved Session Summary",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_saved_session_summary(
+            slug: Annotated[str, Field(min_length=1, description="Saved session slug returned by list_saved_sessions.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug("get_saved_session_summary called: slug=%s", slug)
+            return await get_saved_session_summary(
+                session_dir=self.session_dir,
+                logger=self.logger,
+                slug=slug,
+            )
+
+        @self._tool(
+            name="get_saved_session_driver_info",
+            description=(
+                "Get detailed per-driver data from a saved historical session by slug and driver index. "
+                "Includes lap history, final classification, tyre set history, per-lap snapshots, "
+                "car status, car damage, penalties, collisions, setup/participant data, and race-control "
+                "messages if they were saved."
+            ),
+            title="Saved Session Driver Detail",
+            tags={"saved", "history", "driver", "laps"},
+            output_schema=SAVED_SESSION_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(
+                title="Saved Session Driver Detail",
+                readOnlyHint=True,
+                openWorldHint=False,
+            ),
+        )
+        async def handle_get_saved_session_driver_info(
+            slug: Annotated[str, Field(min_length=1, description="Saved session slug returned by list_saved_sessions.")],
+            driver_index: Annotated[DriverIndex, Field(description="Driver index within the saved session.")],
+        ) -> Dict[str, Any]:
+            self.logger.debug(
+                "get_saved_session_driver_info called: slug=%s driver_index=%s",
+                slug,
+                driver_index,
+            )
+            return await get_saved_session_driver_info(
+                session_dir=self.session_dir,
+                logger=self.logger,
+                slug=slug,
                 driver_index=driver_index,
             )
 

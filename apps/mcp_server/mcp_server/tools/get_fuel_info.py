@@ -129,7 +129,7 @@ def get_fuel_info(
 
     Args:
         logger: Logger instance.
-        driver_index: Driver index (typically 0-21, depends on grid size).
+        driver_index: Driver index (typically 0-24, depends on grid size).
 
     Returns:
         Dict[str, Any]: Fuel info response dict.

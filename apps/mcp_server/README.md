@@ -117,14 +117,19 @@ poetry run python -m apps.mcp_server --managed --debug 2>&1 | tee mcp_http.log
 1. The inspector opens at `http://localhost:5173` (default port).
 2. Under **Tools**, you will see all registered tools:
    - `get_session_info`
+   - `get_f1_setup_guide`
    - `get_race_table`
    - `get_drivers_list`
    - `get_driver_lap_times`
    - `get_session_events_for_driver`
    - `get_player_driver_info`
    - `get_car_damage`
+   - `list_saved_sessions`
+   - `get_saved_session_summary`
+   - `get_saved_session_driver_info`
 3. Tools that require a live session return `"available": false` when no telemetry is active. This is expected — no errors will be shown.
 4. Tools that hit the core backend (`get_driver_lap_times`, `get_session_events_for_driver`, `get_car_damage`) additionally call the backend REST API on `localhost:<server_port>`. These return `"ok": false` with an appropriate error if the backend is not running.
+5. Saved-session tools read JSON files from `Capture.session_dir` in `png_config.json`, matching the save viewer. Use `list_saved_sessions` to find a session slug before requesting a saved summary or saved driver detail.
 
 ## Architecture notes
 

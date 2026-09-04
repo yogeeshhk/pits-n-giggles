@@ -33,6 +33,7 @@ from lib.child_proc_mgmt import (notify_parent_init_complete,
                                  report_pid_from_child)
 from lib.config import PngSettings, load_config_from_json
 from lib.error_status import PngError
+from lib.file_path import get_app_base_dir
 from lib.ipc import IpcDealerAsync, PngAppId
 from lib.logger import get_logger
 from lib.version import get_version
@@ -83,10 +84,14 @@ async def main(logger: logging.Logger, settings: PngSettings, version: str, mana
         logger=logger,
     )
     tasks.append(asyncio.create_task(dealer.start(), name="MCP Dealer Recv"))
+    p = settings.Capture.session_dir_path
+    session_dir = p if p.is_absolute() else (get_app_base_dir() / p).resolve()
+    logger.info("Saved session directory: %s", session_dir)
     mcp_bridge = MCPBridge(
         dealer=dealer,
         logger=logger,
         version=version,
+        session_dir=session_dir,
         transport=transport,
         port=settings.MCP.mcp_http_port
     )
