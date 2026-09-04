@@ -26,8 +26,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import apps.save_viewer.save_viewer_state as SaveViewerState
-from apps.save_viewer.session_discovery import build_session_list, load_session_json
+import apps.web.save_viewer_state as SaveViewerState
+from apps.web.session_discovery import build_session_list, load_session_json
 
 # -------------------------------------- CONSTANTS ---------------------------------------------------------------------
 
@@ -76,13 +76,14 @@ SAVED_SESSION_OUTPUT_SCHEMA = {
 async def list_saved_sessions(
     session_dir: Path,
     logger: logging.Logger,
+    app_version: str,
     *,
     limit: int = 20,
     offset: int = 0,
 ) -> Dict[str, Any]:
     """List saved session summaries from disk."""
 
-    sessions, _ = await _load_session_index(session_dir, logger)
+    sessions, _ = await _load_session_index(session_dir, logger, app_version)
     if sessions is None:
         return _session_dir_unavailable(session_dir)
 
@@ -104,11 +105,12 @@ async def list_saved_sessions(
 async def get_saved_session_summary(
     session_dir: Path,
     logger: logging.Logger,
+    app_version: str,
     slug: str,
 ) -> Dict[str, Any]:
     """Get session-level saved telemetry data for a saved session slug."""
 
-    loaded = await _load_saved_session(session_dir, logger, slug)
+    loaded = await _load_saved_session(session_dir, logger, app_version, slug)
     if not loaded["ok"]:
         return loaded
 
@@ -123,12 +125,13 @@ async def get_saved_session_summary(
 async def get_saved_session_driver_info(
     session_dir: Path,
     logger: logging.Logger,
+    app_version: str,
     slug: str,
     driver_index: int,
 ) -> Dict[str, Any]:
     """Get detailed per-driver data from a saved session slug."""
 
-    loaded = await _load_saved_session(session_dir, logger, slug)
+    loaded = await _load_saved_session(session_dir, logger, app_version, slug)
     if not loaded["ok"]:
         return loaded
 
@@ -149,9 +152,10 @@ async def get_saved_session_driver_info(
 async def _load_saved_session(
     session_dir: Path,
     logger: logging.Logger,
+    app_version: str,
     slug: str,
 ) -> Dict[str, Any]:
-    sessions, slug_map = await _load_session_index(session_dir, logger)
+    sessions, slug_map = await _load_session_index(session_dir, logger, app_version)
     if sessions is None:
         return _session_dir_unavailable(session_dir)
 
@@ -187,6 +191,7 @@ async def _load_saved_session(
 async def _load_session_index(
     session_dir: Path,
     logger: logging.Logger,
+    app_version: str,
 ) -> Tuple[Optional[List[Dict[str, Any]]], Dict[str, str]]:
     if not session_dir.exists():
         logger.debug("Saved session directory does not exist: %s", session_dir)
@@ -194,7 +199,7 @@ async def _load_session_index(
 
     sessions: List[Dict[str, Any]] = []
     slug_map: Dict[str, str] = {}
-    async for current_sessions, current_slug_map in build_session_list(session_dir, logger):
+    async for current_sessions, current_slug_map in build_session_list(session_dir, logger, app_version):
         sessions = current_sessions
         slug_map = current_slug_map
     return sessions, slug_map

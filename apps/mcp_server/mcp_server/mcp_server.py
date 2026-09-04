@@ -31,7 +31,7 @@ import time
 from pathlib import Path
 from typing import Annotated, Any, Callable, Dict, List, Literal, Optional
 
-import apps.save_viewer.save_viewer_state as SaveViewerState
+import apps.web.save_viewer_state as SaveViewerState
 import uvicorn
 from fastmcp import FastMCP
 from pydantic import Field
@@ -743,6 +743,7 @@ TYRE WEAR THRESHOLDS:
             return await list_saved_sessions(
                 session_dir=self.session_dir,
                 logger=self.logger,
+                app_version=self.version,
                 limit=limit,
                 offset=offset,
             )
@@ -771,6 +772,7 @@ TYRE WEAR THRESHOLDS:
             return await get_saved_session_summary(
                 session_dir=self.session_dir,
                 logger=self.logger,
+                app_version=self.version,
                 slug=slug,
             )
 
@@ -803,6 +805,7 @@ TYRE WEAR THRESHOLDS:
             return await get_saved_session_driver_info(
                 session_dir=self.session_dir,
                 logger=self.logger,
+                app_version=self.version,
                 slug=slug,
                 driver_index=driver_index,
             )
