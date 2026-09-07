@@ -20,7 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from apps.backend.state_mgmt_layer.data_per_driver.warns_pens_info import WarningPenaltyHistory
+import logging
+from unittest.mock import MagicMock
+
+from apps.backend.state_mgmt_layer.data_per_driver import DataPerDriver
+from apps.backend.state_mgmt_layer.intf.readers.helpers.drivers_list_rsp import DriversListRsp
+from apps.backend.state_mgmt_layer.intf.readers.stream_overlay import StreamOverlayData
 from lib.f1_types import LapData
 
 from .tests_data_per_driver_base import F1DataPerDriverTest
@@ -72,42 +77,62 @@ class TestWarningPenaltyHistory(F1DataPerDriverTest):
             speed_trap_fastest_lap=0,
         )
 
-    def test_observed_totals_keep_erased_rewind_counts(self):
-        history = WarningPenaltyHistory()
-        full_lap_distance = 1000
-
-        before_rewind = self._lap_data(
-            corner_cutting_warnings=1,
-            total_warnings=1,
-            penalties=3,
-            num_dt=1,
+    def setUp(self):
+        super().setUp()
+        self.driver = DataPerDriver(
+            index=0,
+            logger=logging.getLogger("test"),
+            total_laps=50,
+            state_ref=MagicMock(),
+            weather_aware_prediction=False,
+            tyre_wear_window_size=None,
+            harvest_power_window_size=5,
         )
-        after_rewind = self._lap_data(
-            corner_cutting_warnings=0,
-            total_warnings=0,
-            penalties=0,
-            num_dt=0,
-        )
-        after_retry = self._lap_data(
-            corner_cutting_warnings=1,
-            total_warnings=2,
-            penalties=6,
-            num_dt=1,
-            num_sg=1,
-        )
+        # Exercise the warning readers without unrelated telemetry setup.
+        self.dashboard = DriversListRsp.__new__(DriversListRsp)
+        self.overlay = StreamOverlayData.__new__(StreamOverlayData)
+        self.overlay.m_ref_obj = self.driver
 
-        history.update(before_rewind, full_lap_distance)
-        history.update(after_rewind, full_lap_distance, before_rewind)
-        history.update(after_retry, full_lap_distance, after_rewind)
-
+    def _assert_counts(self, corner, total, penalties, num_dt=0, num_sg=0):
         self.assertEqual(
             {
-                "corner-cutting-warnings": 2,
-                "other-warnings": 1,
-                "total-warnings": 3,
-                "time-penalties": 9,
-                "num-dt": 2,
-                "num-sg": 1,
+                "corner-cutting-warnings": corner,
+                "other-warnings": total - corner,
+                "total-warnings": total,
+                "time-penalties": penalties,
+                "num-dt": num_dt,
+                "num-sg": num_sg,
             },
-            history.getObservedTotalsJSON(),
+            self.dashboard._getWarningsPenaltiesJSON(self.driver),
         )
+        self.overlay._StreamOverlayData__initPenalties()
+        self.assertEqual(corner, self.overlay.m_corner_cutting_warnings)
+        self.assertEqual(total, self.overlay.m_total_warnings)
+        self.assertEqual(penalties, self.overlay.m_penalties)
+        self.assertEqual(num_dt, self.overlay.m_num_dt)
+        self.assertEqual(num_sg, self.overlay.m_num_sg)
+
+    def test_flashback_removes_warnings_and_retry_counts_once(self):
+        for counts in [(1, 2, 3, 1, 1), (0, 0, 0, 0, 0), (1, 2, 3, 1, 1)]:
+            self.driver.updateLapDataPacketCopy(self._lap_data(*counts), 1000)
+            self._assert_counts(*counts)
+
+    def test_partial_flashback_preserves_earlier_warnings(self):
+        for counts in [(3, 5, 6, 2, 1), (1, 2, 3, 1, 0)]:
+            self.driver.updateLapDataPacketCopy(self._lap_data(*counts), 1000)
+            self._assert_counts(*counts)
+        entries = self.driver.m_warning_penalty_history.getEntries()
+        self.assertTrue(any(entry.m_new_value < entry.m_old_value for entry in entries))
+
+    def test_served_penalties_and_duplicate_packets(self):
+        for counts in [(1, 2, 3, 1, 1), (1, 2, 0, 0, 0), (1, 2, 0, 0, 0)]:
+            self.driver.updateLapDataPacketCopy(self._lap_data(*counts), 1000)
+            self._assert_counts(*counts)
+
+    def test_missing_lap_data(self):
+        self.assertTrue(all(
+            value is None
+            for value in self.dashboard._getWarningsPenaltiesJSON(self.driver).values()
+        ))
+        self.overlay._StreamOverlayData__initPenalties()
+        self.assertEqual(0, self.overlay.m_corner_cutting_warnings)

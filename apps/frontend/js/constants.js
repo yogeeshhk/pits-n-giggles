@@ -180,7 +180,6 @@ function getDefaultOverlayData() {
             "speed-trap-record": 319.41497802734375,
             "time-penalties": 0,
             "total-warnings": 0,
-            "track-limits-warnings": 0,
             "track-temperature": 32,
             "unserved-drive-through-pens": 0,
             "unserved-stop-go-pens": 0

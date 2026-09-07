@@ -51,5 +51,4 @@ class WarningsTelemetryOverlay(BaseOverlay):
         if not data:
             return
 
-        self.set_qml_property("cornerCuttingWarnings", data.corner_cutting_warnings)
         self.set_qml_property("trackLimitsWarnings", data.track_limits_warnings)
