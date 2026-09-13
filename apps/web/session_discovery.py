@@ -25,6 +25,7 @@
 import asyncio
 import gzip
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
@@ -71,11 +72,13 @@ _PARSE_CONCURRENCY = 32
 # -------------------------------------- FUNCTIONS ---------------------------------------------------------------------
 
 def find_json_files(session_dir: Path) -> List[Path]:
-    """Recursively find all .json files under session_dir; paths relative to session_dir."""
+    """Find session JSON files, excluding internal caches and directories."""
     return [
         p.relative_to(session_dir)
         for p in session_dir.rglob('*.json')
         if not p.name.startswith('.')
+        and p.name.lower() != LEGACY_CACHE_FILE.lstrip('.')
+        and p.is_file()
     ]
 
 
@@ -110,7 +113,16 @@ def parse_filename(relative_path: Path) -> Dict[str, Any]:
     """Parse session metadata from filename. Pattern: [SessionType]_[Track]_[YYYY]_[MM]_[DD]_[HH]_[mm]_[ss].json"""
     stem = relative_path.stem
     parts = stem.split('_')
+    # Renamed saves and unrelated JSON files may not carry filename metadata.
+    # Keep JSON metadata usable, including when handling a failed file read.
+    fallback = {'sessionType': '', 'track': '', 'date': ''}
+    if len(parts) < 8:
+        return fallback
     date_parts = parts[-6:]
+    try:
+        datetime.strptime('_'.join(date_parts), '%Y_%m_%d_%H_%M_%S')
+    except ValueError:
+        return fallback
     date_str = f"{date_parts[0]}-{date_parts[1]}-{date_parts[2]}T{date_parts[3]}:{date_parts[4]}:{date_parts[5]}"
     prefix = parts[:-6]
 
