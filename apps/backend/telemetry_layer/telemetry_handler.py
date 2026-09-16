@@ -49,6 +49,8 @@ from lib.inter_task_communicator import (
     HudCycleMfdNotification, HudMfdInteractionNotification,
     HudPrevPageMfdNotification, HudToggleNotification, ITCMessage,
     TyreDeltaNotificationMessageCollection)
+from lib.file_path import resolve_user_file
+from lib.lap_telemetry.recorder import TelemetryRecorder
 from lib.logger import PngLogger
 from lib.packet_forwarder import AsyncUDPForwarder
 from lib.save_to_disk import save_json_to_file
@@ -222,6 +224,15 @@ class F1TelemetryHandler:
         # Task handle because asyncio expects a handle to be saved,
         # otherwise it is not guaranteed to be run to completion without being garbage collected
         self.m_save_task: Optional[asyncio.Task] = None
+        self.m_lap_recorder = None
+        if settings.Capture.telemetry_recording_enabled:
+            self.m_lap_recorder = TelemetryRecorder(
+                root=resolve_user_file(str(settings.Capture.session_dir_path / "telemetry")),
+                logger=logger,
+                sample_hz=settings.Capture.telemetry_sample_hz,
+                buffer_bytes=settings.Capture.telemetry_buffer_mib * 1024**2,
+                disk_limit_bytes=settings.Capture.telemetry_session_limit_mib * 1024**2,
+            )
         self.registerCallbacks()
 
     def getTask(self, name: Optional[str] = "Game Telemetry Listener Task") -> asyncio.Task:
@@ -234,6 +245,8 @@ class F1TelemetryHandler:
         Returns:
         asyncio.Task: The telemetry manager task.
         """
+        if self.m_lap_recorder:
+            self.m_lap_recorder.start()
         self.m_manager_task = asyncio.create_task(self.run(), name=name)
         return self.m_manager_task
 
@@ -305,6 +318,9 @@ class F1TelemetryHandler:
         """
         if self.m_manager_task:
             self.m_manager_task.cancel()
+            await asyncio.gather(self.m_manager_task, return_exceptions=True)
+        if self.m_lap_recorder:
+            await self.m_lap_recorder.stop()
         self.m_wdt.stop()
         self.m_menu_wdt.stop()
         if self.m_save_task:
@@ -375,6 +391,9 @@ class F1TelemetryHandler:
             new_uid = packet.m_header.m_sessionUID
             old_uid = self.m_last_session_uid
             if new_uid in (0, old_uid):
+                if self.m_lap_recorder:
+                    self.m_lap_recorder.observe(packet)
+                    self.m_session_state_ref.m_telemetry_recording_ref = self.m_lap_recorder.reference(old_uid)
                 return  # menu packet, or no change
 
             self.m_logger.warning("Session UID changed %s -> %s on a %s packet. Clearing data structures.",
@@ -385,6 +404,9 @@ class F1TelemetryHandler:
 
             self.m_last_session_uid = new_uid
             self.clearAllDataStructures(f"Session UID changed to {new_uid}")
+            if self.m_lap_recorder:
+                self.m_lap_recorder.observe(packet)
+                self.m_session_state_ref.m_telemetry_recording_ref = self.m_lap_recorder.reference(new_uid)
 
         @self.m_manager.on_packet(F1PacketType.SESSION)
         async def handleSessionData(packet: PacketSessionData) -> None:
@@ -816,6 +838,9 @@ class F1TelemetryHandler:
         Args:
             reason (str): Reason for clearing
         """
+        if self.m_lap_recorder:
+            self.m_lap_recorder.reset_session()
+        self.m_session_state_ref.m_telemetry_recording_ref = None
         self.m_session_state_ref.clear(reason)
         self.m_session_state_ref.setRaceOngoing()
         self.m_final_classification_processed = False
@@ -829,6 +854,10 @@ class F1TelemetryHandler:
             session_uid (int): Session UID for which the final classification was received.
         """
 
+        if self.m_lap_recorder:
+            reference = self.m_lap_recorder.reference(session_uid)
+            if reference:
+                final_json["telemetry-recording"] = reference
         event_str = self.m_session_state_ref.getEventInfoStr()
         if not event_str:
             return
@@ -867,6 +896,7 @@ class F1TelemetryHandler:
         return {
             "__UDP_ACTION_BUTTONS__": self.m_udp_action_stats.get_stats(),
             "manager": self.m_manager.getStats(),
+            "lap-telemetry": self.m_lap_recorder.get_stats() if self.m_lap_recorder else {"enabled": False},
         }
 
     def _shouldSaveData(self) -> bool:

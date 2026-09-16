@@ -119,6 +119,15 @@ class CaptureSettings(ConfigDiffMixin, BaseModel):
         }
     )
 
+    telemetry_recording_enabled: bool = Field(
+        default=False, description="Record lap telemetry to Parquet (requires restart)")
+    telemetry_sample_hz: int = Field(
+        default=20, ge=1, le=60, description="Maximum lap telemetry samples per second (requires restart)")
+    telemetry_buffer_mib: int = Field(
+        default=64, ge=1, le=1024, description="Serialized telemetry queue budget in MiB (requires restart)")
+    telemetry_session_limit_mib: int = Field(
+        default=1024, ge=1, le=102400, description="Telemetry disk budget per recording in MiB (requires restart)")
+
     @property
     def session_dir_path(self) -> Path:
         return Path(self.session_dir)

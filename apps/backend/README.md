@@ -97,3 +97,7 @@ grep 'C:\\Users\\<your-username>\\Documents\\f1-telemetry\\pits-n-giggles\\' yap
 > **Note:**
 > If your virtual environment is located inside the code directory (e.g., `.venv/`), you may need to refine the grep further.
 For more advanced filtering, see the [grep documentation](https://www.gnu.org/software/grep/manual/grep.html).
+
+## Lap telemetry recording
+
+See [the recorder guide](../../docs/lap-telemetry-recorder.md) for opt-in Parquet recording, resource limits, flashback handling, and the internal lap reader.

@@ -109,6 +109,7 @@ class SessionState:
         'm_flashback_occurred',
         'm_in_menu',
         'm_track_segments_db',
+        'm_telemetry_recording_ref',
     )
 
     def __init__(self,
@@ -124,6 +125,7 @@ class SessionState:
         """
 
         self.m_logger = logger
+        self.m_telemetry_recording_ref = None
         self.m_pkt_count: int = 0
         self.m_driver_data: List[Optional[DataPerDriver]] = [None] * MAX_DRIVERS
         self.m_player_index: Optional[int] = None
@@ -672,6 +674,8 @@ class SessionState:
         # --- Add core metadata (game year, format, session info)
         final_json["game-year"] = session_info.m_game_year
         final_json["packet-format"] = session_info.m_packet_format
+        if self.m_telemetry_recording_ref:
+            final_json["telemetry-recording"] = dict(self.m_telemetry_recording_ref)
         final_json["session-info"] = (
             session_info.m_packet_session.toJSON() if session_info.m_packet_session else None
         )
