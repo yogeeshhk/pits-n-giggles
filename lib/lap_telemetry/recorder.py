@@ -35,6 +35,7 @@ class TelemetryRecorder:
         self.queued_bytes = 0
         self.peak_queued_bytes = 0
         self.dropped_samples = 0
+        self.dropped_history = 0
         self.error = None
         self.storage_state = "idle"
         self.session_uid = None
@@ -64,6 +65,7 @@ class TelemetryRecorder:
                 self._enqueue("close", self._counters())
             self.session_uid = uid
             self.dropped_samples = 0
+            self.dropped_history = 0
             recording_id = f"{uid}-{uuid4().hex}"
             reference = {"schema_version": 1, "session_uid": str(uid),
                          "manifest": f"telemetry/{recording_id}/manifest.json"}
@@ -87,6 +89,7 @@ class TelemetryRecorder:
 
     def _counters(self):
         return {"queue_dropped_samples": self.dropped_samples,
+                "queue_dropped_history": self.dropped_history,
                 "unaligned_samples": self.assembler.dropped_unaligned if self.assembler else 0}
 
     def _fail(self, reason):
@@ -99,13 +102,16 @@ class TelemetryRecorder:
             return
         payload = msgpack.packb(data, use_bin_type=True)
         charge = len(payload) + 128
-        reserve = 64 * 1024 if operation == "rows" else 0
+        reserve = 64 * 1024 if operation in ("rows", "history") else 0
         full = self.queued_bytes + charge > self.buffer_bytes - reserve
         # Reserve 32 queue slots as well as bytes for lifecycle commands.
-        full = full or self.queue.qsize() >= (4064 if operation == "rows" else 4096)
+        full = full or self.queue.qsize() >= (4064 if operation in ("rows", "history") else 4096)
         if full:
-            if operation == "rows":
-                self.dropped_samples += len(data)
+            if operation in ("rows", "history"):
+                if operation == "rows":
+                    self.dropped_samples += len(data)
+                else:
+                    self.dropped_history += len(data)
             else:
                 self._fail("control_queue_overflow")
             return
@@ -120,6 +126,8 @@ class TelemetryRecorder:
         elif self._store is not None:
             if operation == "rows":
                 self._store.append(data)
+            elif operation == "history":
+                self._store.append_history(data)
             elif operation == "rewind":
                 self._store.rewind(data)
             elif operation == "close":

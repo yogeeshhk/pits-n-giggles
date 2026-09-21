@@ -62,8 +62,47 @@ for prefix, attribute, unit in (
     for index, wheel in enumerate(WHEELS):
         CHANNELS["telemetry"][f"{prefix}_{wheel}"] = ((attribute, index), unit)
 
+# Additive schema evolution: readers null-fill columns absent from older chunks.
+CHANNELS["lap"].update({
+    "gap_front_ms_part": ("m_deltaToCarInFrontInMS", "ms"),
+    "gap_front_minutes": ("m_deltaToCarInFrontMinutes", "min"),
+    "gap_leader_ms_part": ("m_deltaToRaceLeaderInMS", "ms"),
+    "gap_leader_minutes": ("m_deltaToRaceLeaderMinutes", "min"),
+    "pit_lane_active": ("m_pitLaneTimerActive", "bool"),
+    "pit_lane_time_ms": ("m_pitLaneTimeInLaneInMS", "ms"),
+    "pit_stop_time_ms": ("m_pitStopTimerInMS", "ms"),
+    "num_pit_stops": ("m_numPitStops", "enum"),
+    "last_lap_time_ms": ("m_lastLapTimeInMS", "ms"),
+})
+CHANNELS["telemetry"]["clutch"] = ("m_clutch", "%")
+CHANNELS["status"].update({
+    "pit_limiter": ("m_pitLimiterStatus", "bool"),
+    "tyre_compound": ("m_actualTyreCompound", "enum"),
+    "tyre_age_laps": ("m_tyresAgeLaps", "lap"),
+    "fuel_kg": ("m_fuelInTank", "kg"),
+    "front_brake_bias": ("m_frontBrakeBias", "%"),
+    "fia_flag": ("m_vehicleFiaFlags", "enum"),
+    "engine_power_mguk_w": ("m_enginePowerMGUK", "W"),
+})
+CHANNELS["motion_ex"] = {}
+CHANNELS["damage"] = {}
+CHANNELS["session"] = {
+    "track_id": ("m_trackId", "enum"),
+    "safety_car_status": ("m_safetyCarStatus", "enum"),
+}
+for prefix, attribute, unit in (
+    ("wheel_speed", "m_wheelSpeed", "game units (unspecified)"),
+    ("wheel_slip_ratio", "m_wheelSlipRatio", "ratio"),
+    ("wheel_slip_angle", "m_wheelSlipAngle", "rad"),
+):
+    for index, wheel in enumerate(WHEELS):
+        CHANNELS["motion_ex"][f"{prefix}_{wheel}"] = ((attribute, index), unit)
+for index, wheel in enumerate(WHEELS):
+    CHANNELS["damage"][f"tyre_wear_{wheel}"] = (("m_tyresWear", index), "%")
+
 UNITS = {name: unit for group in CHANNELS.values() for name, (_, unit) in group.items()}
 UNITS["ers_percent"] = "%"
+UNITS.update(gap_front_ms="ms", gap_leader_ms="ms")
 
 
 def value(car, attribute):

@@ -4,8 +4,12 @@ import math
 
 from lib.f1_types import F1PacketType, PacketEventData
 from .channels import CHANNELS, value
+from .history import HISTORY_PACKETS, HistoryCollector
 
 PACKETS = {
+    F1PacketType.MOTION_EX: ("motion_ex", None),
+    F1PacketType.CAR_DAMAGE: ("damage", "m_carDamageData"),
+    F1PacketType.SESSION: ("session", None),
     F1PacketType.LAP_DATA: ("lap", "m_lapData"),
     F1PacketType.CAR_TELEMETRY: ("telemetry", "m_carTelemetryData"),
     F1PacketType.CAR_STATUS: ("status", "m_carStatusData"),
@@ -26,6 +30,7 @@ class SampleAssembler:
         if not 1 <= sample_hz <= 60 or not 0 < max_age_s <= 2:
             raise ValueError("Invalid recording frequency or source age")
         self.emit = emit
+        self.history = HistoryCollector(emit)
         self.sample_hz = sample_hz
         self.max_age_s = max_age_s
         self.epoch = 0
@@ -50,9 +55,9 @@ class SampleAssembler:
             self.flush()
             self._rewind(packet.mEventDetails.flashbackSessionTime)
             self.frame = frame
-            self._seen_types = set(PACKETS)
+            self._seen_types = set(PACKETS) | HISTORY_PACKETS | {F1PacketType.PARTICIPANTS}
             return
-        if kind not in PACKETS and kind != F1PacketType.PARTICIPANTS:
+        if kind not in PACKETS and kind not in HISTORY_PACKETS and kind != F1PacketType.PARTICIPANTS:
             return
         if self.frame is not None and frame < self.frame and frame != 0:
             return  # Reordering, not a flashback (overall frame is monotonic).
@@ -71,9 +76,19 @@ class SampleAssembler:
             self.active_cars = packet.m_numActiveCars
             self.public = {i: value(car, "m_yourTelemetry") == 1
                            for i, car in enumerate(packet.m_participants)}
-        else:
+        elif kind in PACKETS:
             group, attribute = PACKETS[kind]
-            self.cache[group] = (header, getattr(packet, attribute))
+            if kind == F1PacketType.MOTION_EX:
+                cars = [None] * 24
+                if 0 <= header.m_playerCarIndex < 24:
+                    cars[header.m_playerCarIndex] = packet
+            elif kind == F1PacketType.SESSION:
+                cars = [packet] * 24
+            else:
+                cars = getattr(packet, attribute)
+            self.cache[group] = (header, cars)
+        if kind in HISTORY_PACKETS:
+            self.history.feed(packet, self.epoch, self.public)
 
     def _rewind(self, time):
         if not math.isfinite(time):
@@ -81,6 +96,7 @@ class SampleAssembler:
         self.epoch += 1
         self.emit("rewind", {"epoch": self.epoch, "target_time_s": time})
         self.cache.clear()
+        self.history.clear()
         self.frame = self.time = self.last_sample = None
         self._seen_types.clear()
 
@@ -123,7 +139,9 @@ class SampleAssembler:
             for group, channels in CHANNELS.items():
                 source = sources.get(group)
                 age = time - source[0].m_sessionTime if source else None
-                valid = source is not None and -1e-5 <= age <= self.max_age_s and index < len(source[1])
+                max_age = 2.5 if group in ("session", "damage") else self.max_age_s
+                valid = (source is not None and -1e-5 <= age <= max_age
+                         and index < len(source[1]) and source[1][index] is not None)
                 row[f"{group}_source_time_s"] = source[0].m_sessionTime if source else None
                 row[f"{group}_source_frame_id"] = source[0].m_frameIdentifier if source else None
                 row[f"{group}_age_s"] = age
@@ -134,11 +152,15 @@ class SampleAssembler:
             # Restricted status is unavailable until participants confirm public.
             # Car Telemetry has no restricted fields in the supported parser spec.
             if self.public.get(index) is not True:
-                for name in CHANNELS["status"]:
+                for name in (*CHANNELS["status"], *CHANNELS["damage"]):
                     if name != "ers_harvest_limit_j":
                         row[name] = None
             if header.m_packetFormat < 2026:
                 row["ers_harvest_limit_j"] = None
+            for gap in ("front", "leader"):
+                milliseconds, minutes = row[f"gap_{gap}_ms_part"], row[f"gap_{gap}_minutes"]
+                row[f"gap_{gap}_ms"] = (milliseconds + (minutes or 0) * 60000
+                                             if milliseconds is not None else None)
             energy = row["ers_store_j"]
             row["ers_percent"] = energy / 4_000_000 * 100 if energy is not None else None
             rows.append(row)

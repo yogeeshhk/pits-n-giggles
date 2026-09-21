@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from .history import flush_history
 from .channels import SCHEMA_VERSION, UNITS, arrow_schema
 
 
@@ -15,12 +16,13 @@ class SessionStore:
         self.disk_limit = disk_limit_bytes
         self.chunk_rows = chunk_rows
         self.rows = []
+        self.history_rows = []
         self.schema = arrow_schema()
         self.manifest = {
             "schema_version": SCHEMA_VERSION, **metadata, "units": UNITS,
             "state": "recording", "chunks": [], "rewinds": [],
             "parquet_bytes": 0, "written_samples": 0, "discarded_samples": 0,
-            "counters": {},
+            "counters": {}, "history_chunks": [], "discarded_history": 0,
         }
         self.checkpoint()
 
@@ -32,6 +34,14 @@ class SessionStore:
         if len(self.rows) >= self.chunk_rows:
             self.flush()
 
+    def append_history(self, rows):
+        if self.manifest["state"] != "recording":
+            self.manifest["discarded_history"] += len(rows)
+            return
+        self.history_rows.extend(rows)
+        if len(self.history_rows) >= 256:
+            self.flush()
+
     def rewind(self, event):
         # Commit invalidation before subsequent samples become visible. Old
         # chunks remain immutable; readers apply all later rewind cutoffs.
@@ -40,7 +50,14 @@ class SessionStore:
         self.checkpoint()
 
     def flush(self):
+        flush_history(self)
         if not self.rows:
+            self.checkpoint()
+            return
+        if self.manifest["state"] != "recording":
+            self.manifest["discarded_samples"] += len(self.rows)
+            self.rows.clear()
+            self.checkpoint()
             return
         import pyarrow as pa
         import pyarrow.parquet as pq
@@ -77,7 +94,7 @@ class SessionStore:
         if len(content.encode()) + self.manifest["parquet_bytes"] > self.disk_limit:
             # Even rewind metadata must stay bounded. Fail closed rather than
             # omit an invalidation and accidentally expose superseded samples.
-            self.manifest.update(state="failed", error="metadata_disk_limit", chunks=[], rewinds=[])
+            self.manifest.update(state="failed", error="metadata_disk_limit", chunks=[], rewinds=[], history_chunks=[])
             content = json.dumps(self.manifest, separators=(",", ":"))
         temporary.write_text(content, encoding="utf-8")
         temporary.replace(self.directory / "manifest.json")
@@ -86,6 +103,7 @@ class SessionStore:
         if not error:
             self.flush()
         self.rows.clear()
+        self.history_rows.clear()
         self.manifest["counters"] = counters
         if error:
             self.manifest.update(state="failed", error=error)
@@ -94,7 +112,7 @@ class SessionStore:
         self.checkpoint()
 
 
-def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, end_m=None, max_rows=None):
+def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, end_m=None, max_rows=None, manifest=None):
     """Read a lap from committed chunks; exclude superseded timeline rows.
 
     This is an internal storage API, not an MCP response. An active recording
@@ -108,7 +126,8 @@ def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, en
     if start_m is not None and end_m is not None and start_m > end_m:
         raise ValueError("Invalid distance window")
     directory = Path(directory)
-    manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    if manifest is None:
+        manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     if manifest["schema_version"] != SCHEMA_VERSION:
         raise ValueError("Unsupported telemetry schema")
     if manifest["state"] == "failed":
@@ -119,18 +138,24 @@ def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, en
     required = {"epoch", "session_time_s", "distance_m", "lap_num", "driver_index"}
     selected = sorted(set(requested) | required) if requested is not None else None
     rows = []
+    output_columns = selected if selected is not None else arrow_schema().names
     for chunk in manifest["chunks"]:
         if driver_index not in chunk["drivers"] or not {lap_num, lap_num + 1}.intersection(chunk["laps"]):
             continue
         path = (directory / chunk["file"]).resolve()
         if path.parent != directory.resolve():
             raise ValueError("Invalid chunk path")
-        table = pq.read_table(path, columns=selected, filters=[
+        available = set(pq.read_schema(path).names)
+        projection = [name for name in selected if name in available] if selected is not None else None
+        table = pq.read_table(path, columns=projection, filters=[
             ("driver_index", "=", driver_index), ("lap_num", "in", [lap_num, lap_num + 1]),
         ])
         if max_rows is not None and len(rows) + table.num_rows > max_rows:
             raise ValueError("Lap telemetry read limit exceeded")
-        rows.extend(table.to_pylist())
+        missing_columns = set(output_columns) - available
+        for row in table.to_pylist():
+            row.update(dict.fromkeys(missing_columns))
+            rows.append(row)
     for event in manifest["rewinds"]:
         rows = [row for row in rows if row["epoch"] >= event["epoch"]
                 or row["session_time_s"] < event["target_time_s"]]

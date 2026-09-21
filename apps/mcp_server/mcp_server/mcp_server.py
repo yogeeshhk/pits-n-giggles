@@ -47,6 +47,7 @@ from lib.web_server import get_socket_for_uvicorn
 from meta.meta import APP_NAME
 
 from .tools.get_lap_telemetry import LAP_TELEMETRY_OUTPUT_SCHEMA, get_lap_telemetry
+from .tools.telemetry_analysis import register_analysis_tools
 
 from .tools.get_car_damage import CAR_DAMAGE_OUTPUT_SCHEMA, get_car_damage
 from .tools.get_driver_lap_times import (DRIVER_LAP_TIMES_OUTPUT_SCHEMA,
@@ -720,6 +721,8 @@ TYRE WEAR THRESHOLDS:
         ) -> Dict[str, Any]:
             self.logger.debug("get_coach_notes called: driver_index=%s", driver_index)
             return await get_coach_notes(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        register_analysis_tools(self)
 
         @self._tool(
             name="get_lap_telemetry",

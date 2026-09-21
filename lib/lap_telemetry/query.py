@@ -16,7 +16,7 @@ MAX_READ_ROWS = 100000
 
 GROUPS = {
     prefix: {wheel: f"{prefix}_{wheel}" for wheel in ("fl", "fr", "rl", "rr")}
-    for prefix in ("tyre_surface_temp", "tyre_inner_temp", "brake_temp", "tyre_pressure", "surface_type")
+    for prefix in ("tyre_surface_temp", "tyre_inner_temp", "brake_temp", "tyre_pressure", "surface_type", "wheel_speed", "wheel_slip_ratio", "wheel_slip_angle", "tyre_wear")
 }
 GROUPS["world_position"] = {axis: f"world_position_{axis}" for axis in ("x", "y", "z")}
 AXES = ("distance_m", "session_time_s", "lap_time_ms")

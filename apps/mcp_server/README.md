@@ -222,5 +222,13 @@ saved-session discovery.
 
 These tests cover real Parquet queries, live and saved calls through FastMCP,
 IPC route registration, response limits, source identity, path validation,
-flashbacks, partial coverage and unavailable recordings. Lap comparison and
-corner/time-loss analysis are separate milestones.
+flashbacks, partial coverage and unavailable recordings.
+
+### Coaching and histories
+
+The recorder also powers `compare_laps`, `get_corner_analysis`,
+`get_time_loss_analysis`, `get_race_pace_breakdown`,
+`get_driver_telemetry_history`, `get_pit_timing_analysis`, and
+`get_start_analysis`, for both live and saved sessions.
+See [the complete coaching guide](../../docs/telemetry-coaching.md) for
+arguments, examples, recording settings, interpretation and limitations.

@@ -4,12 +4,13 @@ import asyncio
 
 from pydantic import ValidationError
 
+from lib.lap_telemetry.analysis import AnalysisQuery, analyze_reference
 from lib.lap_telemetry.query import LapTelemetryQuery, safe_query_reference, unavailable
 
 
-async def handle_lap_telemetry_request(telemetry_handler, session_state, data, logger):
+async def handle_lap_telemetry_request(telemetry_handler, session_state, data, logger, *, analysis=False):
     try:
-        query = LapTelemetryQuery.model_validate(data)
+        query = (AnalysisQuery if analysis else LapTelemetryQuery).model_validate(data)
     except ValidationError:
         return unavailable("invalid_request")
     recorder = telemetry_handler.m_lap_recorder
@@ -22,7 +23,7 @@ async def handle_lap_telemetry_request(telemetry_handler, session_state, data, l
         return unavailable("recording_not_started")
     epoch = recorder.assembler.epoch
     result = await asyncio.to_thread(
-        safe_query_reference, recorder.root.parent, reference, query, logger, expected_epoch=epoch,
+        analyze_reference if analysis else safe_query_reference, recorder.root.parent, reference, query, logger, expected_epoch=epoch,
     )
     # Disk reads yield to packet processing. Never return a result labeled live
     # if a session clear, rewind or writer failure happened during that read.

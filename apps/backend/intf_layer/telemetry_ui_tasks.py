@@ -62,6 +62,10 @@ def _initDealer(
             return {"ok": True, "data": result.data}
         return {"ok": False, "error": result.detail, "error_code": result.error.name, "data": None}
 
+    @dealer.route("telemetry-analysis-request")
+    async def _handle_telemetry_analysis_request(data: dict, _sender: str) -> dict:
+        return await handle_lap_telemetry_request(telemetry_handler, session_state, data, logger, analysis=True)
+
     @dealer.route("lap-telemetry-request")
     async def _handle_lap_telemetry_request(data: dict, _sender: str) -> dict:
         return await handle_lap_telemetry_request(telemetry_handler, session_state, data, logger)

@@ -20,7 +20,7 @@ Add these fields to `Capture` in `png_config.json`, then restart the backend:
 Recording defaults to disabled. The sample rate accepts 1–60 Hz and cannot
 exceed the received rate. The buffer setting covers serialized queued and
 in-flight messages; it is not a limit on total process memory. The writer also
-holds at most approximately 2,048 decoded rows, Arrow conversion buffers, and
+holds at most approximately 2,048 decoded trace rows plus a bounded history batch, Arrow conversion buffers, and
 the session manifest. A single compressed chunk may temporarily occupy disk
 space beyond the retained recording budget while its size is checked.
 
@@ -55,15 +55,18 @@ Columns and units are defined in `lib/lap_telemetry/channels.py`. Booleans and
 enumerations retain their types. Missing/nonfinite values are null; valid zeros
 are preserved. Restricted ERS status fields are null unless participant data
 confirms public telemetry. Telemetry 2 remains null when no such packet arrives.
-Motion Ex, wheel-slip recording, setup histories and derived coaching remain
-separate milestones.
+Motion Ex wheel speed/slip (player-only), clutch, tyre wear, minute-aware gaps,
+pit timers, fuel and tyre state are also recorded. Changed setup/tyre/session/
+lap-position/lap-timing snapshots and events use separate history Parquet chunks.
+See [coaching and history tools](telemetry-coaching.md).
 
 ## Alignment and lifecycle
 
 The assembler finalizes a frame when the next relevant frame arrives. Lap and
 Car Telemetry packets must agree on frame identifiers and session timestamp.
 An unmatched frame is discarded and counted rather than assigned to a potentially
-incorrect lap. Other channels may carry a source value up to 250 ms old; every
+incorrect lap. Other channels may carry a source value up to 250 ms old (2.5 seconds for the
+slower Session and Car Damage packets); every
 group records its source timestamp, frame ID, age and stale flag. Stale values
 are null. Sampling uses time buckets with a 10% interval tolerance for the
 game's float32 timestamps. Inputs are never interpolated.
@@ -88,7 +91,7 @@ sequential background writer using `asyncio.to_thread`. This queue is separate
 from the shared inter-task communicator so it can enforce a byte budget and
 nonblocking admission without changing other subsystems' queue policies.
 
-- Sample queue overflow drops incoming rows and counts them.
+- Sample/history queue overflow drops incoming rows and counts each kind separately.
 - Reserved command capacity protects session changes and rewinds. Exhausting
   even that capacity stops recording with an explicit failure.
 - Hitting the per-recording disk budget discards the pending chunk and stops
