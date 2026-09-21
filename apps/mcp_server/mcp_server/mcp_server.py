@@ -42,8 +42,11 @@ from starlette.responses import JSONResponse
 from lib.error_status import PngError, PngHttpPortInUseError
 from lib.event_counter import EventCounter
 from lib.ipc import IpcDealerAsync
+from lib.lap_telemetry.query import SELECTORS
 from lib.web_server import get_socket_for_uvicorn
 from meta.meta import APP_NAME
+
+from .tools.get_lap_telemetry import LAP_TELEMETRY_OUTPUT_SCHEMA, get_lap_telemetry
 
 from .tools.get_car_damage import CAR_DAMAGE_OUTPUT_SCHEMA, get_car_damage
 from .tools.get_driver_lap_times import (DRIVER_LAP_TIMES_OUTPUT_SCHEMA,
@@ -717,6 +720,37 @@ TYRE WEAR THRESHOLDS:
         ) -> Dict[str, Any]:
             self.logger.debug("get_coach_notes called: driver_index=%s", driver_index)
             return await get_coach_notes(dealer=self.dealer, logger=self.logger, driver_index=driver_index)
+
+        @self._tool(
+            name="get_lap_telemetry",
+            description=(
+                "Get aligned distance/time telemetry arrays for one driver and lap. "
+                "Omit session_slug for the current live recording, or pass a slug from list_saved_sessions. "
+                "Returns committed samples only, units, partial-lap coverage, missing/stale-channel counts, "
+                "and downsampling metadata. Supports driving inputs, tyre/brake temperatures, pressures, "
+                "ERS, world position, Active Aero and Overtake. Recording must have been enabled; "
+                "old summary-only saves cannot provide traces. Limit channels or distance for detail. "
+                "Uniform downsampling may omit brief events; do not infer precise braking points from sparse samples."
+            ),
+            title="Lap Telemetry",
+            tags={"driver", "laps", "telemetry", "saved"},
+            output_schema=LAP_TELEMETRY_OUTPUT_SCHEMA,
+            annotations=ToolAnnotations(title="Lap Telemetry", readOnlyHint=True, openWorldHint=False),
+        )
+        async def handle_get_lap_telemetry(
+            driver_index: Annotated[int, Field(ge=0, le=23, strict=True, description="Driver index in this session (0-23).")],
+            lap_num: Annotated[int, Field(ge=1, le=255, strict=True, description="One-based lap number.")],
+            session_slug: Annotated[Optional[str], Field(min_length=1, max_length=256, description="Saved session slug; omit for live.")] = None,
+            channels: Annotated[Optional[List[str]], Field(min_length=1, max_length=len(SELECTORS), description="Channels or groups: " + ", ".join(SELECTORS))] = None,
+            start_m: Annotated[Optional[float], Field(allow_inf_nan=False, description="Inclusive start lap distance in metres.")] = None,
+            end_m: Annotated[Optional[float], Field(allow_inf_nan=False, description="Inclusive end lap distance in metres.")] = None,
+            max_samples: Annotated[int, Field(ge=2, le=2000, strict=True, description="Maximum samples per array; channel and byte budgets may reduce this further.")] = 200,
+        ) -> Dict[str, Any]:
+            return await get_lap_telemetry(
+                self.dealer, self.logger, self.session_dir, self.version,
+                driver_index=driver_index, lap_num=lap_num, session_slug=session_slug,
+                channels=channels, start_m=start_m, end_m=end_m, max_samples=max_samples,
+            )
 
         @self._tool(
             name="list_saved_sessions",

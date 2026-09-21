@@ -37,6 +37,7 @@ from lib.ipc import IpcDealerAsync, IpcPublisherAsync, PngAppId
 from lib.periodic_task import periodic_task
 
 from .ipc import registerIpcTask
+from .lap_telemetry import handle_lap_telemetry_request
 from .request_handlers import handleDriverInfoRequest
 
 # -------------------------------------- FUNCTIONS ---------------------------------------------------------------------
@@ -44,7 +45,8 @@ from .request_handlers import handleDriverInfoRequest
 def _initDealer(
     settings: PngSettings,
     logger: logging.Logger,
-    session_state: SessionState) -> IpcDealerAsync:
+    session_state: SessionState,
+    telemetry_handler: F1TelemetryHandler) -> IpcDealerAsync:
     dealer = IpcDealerAsync(
         host="127.0.0.1",
         port=settings.Network.broker_router_port,
@@ -59,6 +61,10 @@ def _initDealer(
         if result.ok:
             return {"ok": True, "data": result.data}
         return {"ok": False, "error": result.detail, "error_code": result.error.name, "data": None}
+
+    @dealer.route("lap-telemetry-request")
+    async def _handle_lap_telemetry_request(data: dict, _sender: str) -> dict:
+        return await handle_lap_telemetry_request(telemetry_handler, session_state, data, logger)
 
     @dealer.route("race-info-request")
     async def _handle_race_info_request(_data: dict, sender: str) -> dict:
@@ -94,7 +100,7 @@ def initUiIntfLayer(
     ipc_pub = IpcPublisherAsync(logger=logger, port=settings.Network.broker_xsub_port)
     tasks.append(ipc_pub.get_task())
 
-    dealer = _initDealer(settings, logger, session_state)
+    dealer = _initDealer(settings, logger, session_state, telemetry_handler)
     tasks.append(asyncio.create_task(dealer.start(), name="Backend Dealer Recv"))
 
     # Setup periodic tasks

@@ -1,7 +1,8 @@
 # Lap telemetry recorder
 
-The backend can record lap traces to compressed Parquet files. This milestone
-provides recording and an internal reader; it does not register new MCP tools.
+The backend can record lap traces to compressed Parquet files. The
+`get_lap_telemetry` MCP tool reads live and saved recordings with bounded,
+aligned responses; see [the MCP guide](../apps/mcp_server/README.md#lap-telemetry).
 
 ## Enable recording
 
@@ -126,10 +127,14 @@ It returns rows, units, recording state, capture-loss counters and coverage.
 Coverage describes the whole lap before window selection. The partial flag is
 conservative: it considers start coverage, a following lap, gaps in sample times,
 and session-wide loss counters. It does not certify lap validity or clean pace.
-Failed recordings and unknown schema versions are rejected.
+The result also includes recording identity, the latest committed timeline epoch,
+recording frequency and the last sample time in the requested lap. Failed
+recordings and unknown schema versions are rejected.
 
-The future MCP layer must add response-size limits and downsampling. This
-internal reader intentionally preserves recorded samples.
+The MCP layer adds sample, cell and byte limits with explicit downsampling
+metadata. This internal reader intentionally preserves recorded samples. Its
+optional `max_rows` argument bounds the number of candidate rows loaded across
+the requested and following lap; MCP queries use a 100,000-row limit.
 
 ## Validation
 

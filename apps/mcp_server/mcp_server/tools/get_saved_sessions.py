@@ -154,6 +154,8 @@ async def _load_saved_session(
     logger: logging.Logger,
     app_version: str,
     slug: str,
+    *,
+    recompute: bool = True,
 ) -> Dict[str, Any]:
     sessions, slug_map = await _load_session_index(session_dir, logger, app_version)
     if sessions is None:
@@ -170,7 +172,7 @@ async def _load_saved_session(
             "data": None,
         }
 
-    data = await load_session_json(session_dir, slug_map, slug)
+    data = await load_session_json(session_dir, slug_map, slug, recompute=recompute)
     if data is None:
         return {
             "ok": False,

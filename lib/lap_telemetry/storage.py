@@ -94,7 +94,7 @@ class SessionStore:
         self.checkpoint()
 
 
-def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, end_m=None):
+def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, end_m=None, max_rows=None):
     """Read a lap from committed chunks; exclude superseded timeline rows.
 
     This is an internal storage API, not an MCP response. An active recording
@@ -125,9 +125,12 @@ def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, en
         path = (directory / chunk["file"]).resolve()
         if path.parent != directory.resolve():
             raise ValueError("Invalid chunk path")
-        rows.extend(pq.read_table(path, columns=selected, filters=[
+        table = pq.read_table(path, columns=selected, filters=[
             ("driver_index", "=", driver_index), ("lap_num", "in", [lap_num, lap_num + 1]),
-        ]).to_pylist())
+        ])
+        if max_rows is not None and len(rows) + table.num_rows > max_rows:
+            raise ValueError("Lap telemetry read limit exceeded")
+        rows.extend(table.to_pylist())
     for event in manifest["rewinds"]:
         rows = [row for row in rows if row["epoch"] >= event["epoch"]
                 or row["session_time_s"] < event["target_time_s"]]
@@ -144,10 +147,16 @@ def read_lap(directory, driver_index, lap_num, *, columns=None, start_m=None, en
     coverage = {"start_m": min(distances) if distances else None,
                 "end_m": max(distances) if distances else None,
                 "partial": not complete, "following_lap_observed": following}
+    recording = {
+        "session_uid": str(manifest.get("session_uid", "")),
+        "epoch": max((event["epoch"] for event in manifest["rewinds"]), default=0),
+        "sample_hz": manifest["sample_hz"],
+        "last_lap_sample_session_time_s": rows[-1]["session_time_s"] if rows else None,
+    }
     rows = [row for row in rows if (start_m is None or row["distance_m"] is not None and row["distance_m"] >= start_m)
             and (end_m is None or row["distance_m"] is not None and row["distance_m"] <= end_m)]
     if requested is not None:
         rows = [{key: row[key] for key in requested} for row in rows]
-    return {"schema_version": SCHEMA_VERSION, "rows": rows, "coverage": coverage,
+    return {"schema_version": SCHEMA_VERSION, "rows": rows, "coverage": coverage, "recording": recording,
             "state": manifest["state"], "units": manifest["units"],
             "counters": manifest["counters"], "discarded_samples": manifest["discarded_samples"]}

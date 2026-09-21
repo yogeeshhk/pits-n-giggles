@@ -76,7 +76,8 @@ def find_json_files(session_dir: Path) -> List[Path]:
     return [
         p.relative_to(session_dir)
         for p in session_dir.rglob('*.json')
-        if not p.name.startswith('.')
+        if p.relative_to(session_dir).parts[0].lower() != 'telemetry'
+        and not p.name.startswith('.')
         and p.name.lower() != LEGACY_CACHE_FILE.lstrip('.')
         and p.is_file()
     ]
@@ -608,7 +609,9 @@ async def _cached_load(full_path_str: str) -> Dict[str, Any]:
 async def load_session_json(
     session_dir: Path,
     slug_map: Dict[str, str],
-    slug: str
+    slug: str,
+    *,
+    recompute: bool = True,
 ) -> Optional[Dict[str, Any]]:
     """Resolve slug to file, validate path, load and cache JSON. Returns None on any error."""
     relative_str = slug_map.get(slug)
@@ -621,6 +624,11 @@ async def load_session_json(
         return None
 
     try:
+        if not recompute:
+            # Manifest lookup does not need derived race statistics. Read fresh
+            # data because a manual save may replace a file at the same path.
+            async with aiofiles.open(full, 'rb') as file:
+                return orjson.loads(await file.read())
         return await _cached_load(str(full))
     except Exception:  # pylint: disable=broad-exception-caught
         return None
