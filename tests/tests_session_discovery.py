@@ -23,7 +23,7 @@ def test_cache_files_are_excluded_recursively(tmp_path, name):
                                   "Race_Shanghai_2026_99_08_19_03_49.json"])
 def test_invalid_filename_preserves_json_metadata(name):
     assert discovery.parse_filename(Path(name)) == {
-        "sessionType": "", "track": "", "date": "",
+        "sessionType": "", "track": Path(name).stem, "date": "",
     }
     assert discovery.resolve_session_meta(Path(name), {
         "track-id": "Shanghai", "session-type": "Race",
@@ -58,7 +58,7 @@ async def test_rebuild_survives_bad_json_and_excludes_cache(tmp_path, unreadable
         snapshots = [s async for s in discovery.build_session_list(tmp_path, Mock(), "test")]
     sessions, slugs = snapshots[-1]
     assert len(sessions) == 2
-    assert sessions[0]["track"] == "Shanghai"
+    assert next(s for s in sessions if s["slug"] == discovery.to_slug(Path(valid_name)))["track"] == "Shanghai"
     assert set(slugs.values()) == {valid_name, "bad.json"}
     assert (tmp_path / discovery.CACHE_FILE).is_file()
     # The persisted cache must not reintroduce internal files on the next rebuild.

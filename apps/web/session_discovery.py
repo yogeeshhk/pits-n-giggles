@@ -110,15 +110,22 @@ def to_slug(relative_path: Path) -> str:
 
 
 def parse_filename(relative_path: Path) -> Dict[str, Any]:
-    """Parse session metadata from filename. Pattern: [SessionType]_[Track]_[YYYY]_[MM]_[DD]_[HH]_[mm]_[ss].json"""
+    """Parse session metadata from filename. Pattern: [SessionType]_[Track]_[YYYY]_[MM]_[DD]_[HH]_[mm]_[ss].json
+
+    Filenames are user-editable, so this never raises: anything that doesn't fit the
+    pattern falls back to the bare stem as the track with no type or date. Callers are
+    expected to prefer the in-JSON metadata anyway - see `resolve_session_meta`.
+    """
     stem = relative_path.stem
     parts = stem.split('_')
     # Renamed saves and unrelated JSON files may not carry filename metadata.
     # Keep JSON metadata usable, including when handling a failed file read.
-    fallback = {'sessionType': '', 'track': '', 'date': ''}
+    fallback = {'sessionType': '', 'track': stem, 'date': ''}
     if len(parts) < 8:
         return fallback
     date_parts = parts[-6:]
+    if not all(p.isdigit() for p in date_parts):
+        return fallback
     try:
         datetime.strptime('_'.join(date_parts), '%Y_%m_%d_%H_%M_%S')
     except ValueError:
@@ -145,8 +152,31 @@ def _match_session_type(prefix: List[str]) -> Tuple[str, int]:
     return (prefix[0] if prefix else ''), 1
 
 
-def resolve_session_meta(relative_path: Path, session_info: Dict[str, Any]) -> Dict[str, Any]:
-    """Prefer in-JSON fields over filename-derived values."""
+def _normalize_saved_at(saved_at: Optional[str]) -> str:
+    """Convert the save's `debug.timestamp` ('YYYY-MM-DD HH:MM:SS TZ') into the sortable
+    'YYYY-MM-DDTHH:MM:SS' form used for display and ordering. Returns '' if unusable.
+
+    Only the first two whitespace-separated fields are used - Windows' %Z yields
+    multi-word zone names like 'GMT Standard Time'.
+    """
+    if not saved_at:
+        return ''
+    parts = saved_at.split()
+    if len(parts) < 2:
+        return ''
+    return f"{parts[0]}T{parts[1]}"
+
+
+def resolve_session_meta(
+    relative_path: Path,
+    session_info: Dict[str, Any],
+    saved_at: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Prefer in-JSON fields over filename-derived values.
+
+    `saved_at` is the save's own `debug.timestamp`. It takes precedence over the date
+    embedded in the filename so that renaming a save doesn't lose (or mis-order) it.
+    """
     filename_meta = parse_filename(relative_path)
 
     track_id = session_info.get('track-id')
@@ -158,7 +188,7 @@ def resolve_session_meta(relative_path: Path, session_info: Dict[str, Any]) -> D
     result = {
         'track': track,
         'sessionType': session_type,
-        'date': filename_meta['date'],
+        'date': _normalize_saved_at(saved_at) or filename_meta['date'],
     }
     if formula is not None:
         result['formula'] = formula
@@ -318,7 +348,13 @@ def _parse_session_metadata(path: Path, logger: PngLogger) -> Dict[str, Any]:
             default=None,
         )
 
-    result: Dict[str, Any] = {'session_info': session_info, 'is_spectator': is_spectator}
+    result: Dict[str, Any] = {
+        'session_info': session_info,
+        'is_spectator': is_spectator,
+        # Authoritative save time, written by every save path. Preferred over the
+        # filename's date so renaming a save doesn't lose it.
+        'saved_at': (data.get('debug') or {}).get('timestamp'),
+    }
 
     if player:
         # `or {}` not a default arg: the key is present-but-null in saves written for a
@@ -411,6 +447,14 @@ def _sort_files_newest_first(json_files: List[Path]) -> List[Path]:
     return sorted(json_files, key=_date_key, reverse=True)
 
 
+def _mtime_date(full_path: Path) -> str:
+    """Last-resort date: the file's own mtime, so an entry is never left unsortable."""
+    try:
+        return datetime.fromtimestamp(full_path.stat().st_mtime).strftime('%Y-%m-%dT%H:%M:%S')
+    except OSError:
+        return ''
+
+
 def _make_session_entry(
     rel_path: Path,
     full_path: Path,
@@ -424,7 +468,7 @@ def _make_session_entry(
             'slug': slug,
             'sessionType': filename_meta['sessionType'],
             'track': filename_meta['track'],
-            'date': filename_meta['date'],
+            'date': filename_meta['date'] or _mtime_date(full_path),
             'validLapCount': 0,
             'isSpectator': False,
             'fileSize': full_path.stat().st_size if full_path.exists() else 0,
@@ -433,13 +477,13 @@ def _make_session_entry(
         }
 
     session_info = outcome['session_info']
-    meta = resolve_session_meta(rel_path, session_info)
+    meta = resolve_session_meta(rel_path, session_info, outcome.get('saved_at'))
     network_game = session_info.get('network-game', 0)
     entry: Dict[str, Any] = {
         'slug': slug,
         'sessionType': meta['sessionType'],
         'track': meta['track'],
-        'date': meta['date'],
+        'date': meta['date'] or _mtime_date(full_path),
         'validLapCount': outcome.get('valid_lap_count', 0),
         'isSpectator': outcome.get('is_spectator', False),
         'fileSize': full_path.stat().st_size,
@@ -522,7 +566,15 @@ async def build_session_list(
     completed = 0
     for coro in asyncio.as_completed(tasks):
         rel_path, outcome = await coro
-        all_raw.append(_make_session_entry(rel_path, session_dir / rel_path, outcome))
+        # Contain per-file failures. _parse_one already returns read/decode errors as
+        # values, but entry building can raise on its own (e.g. unparseable metadata);
+        # letting that escape would abandon every other session *and* skip the cache
+        # write below, re-parsing the whole directory on every startup forever.
+        try:
+            all_raw.append(_make_session_entry(rel_path, session_dir / rel_path, outcome))
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.exception("build_session_list: skipping %s: %s", rel_path, exc)
+            continue
         completed += 1
 
         # _snapshot() copies + sorts all_raw from scratch, so yielding on every single
